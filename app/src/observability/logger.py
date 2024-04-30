@@ -4,7 +4,7 @@ from app.src.observability.influxdb_logger_handler import InfluxDbLoggerHandler
 
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(threadName)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
     handlers=[
         logging.FileHandler(env.LOG_PATH),

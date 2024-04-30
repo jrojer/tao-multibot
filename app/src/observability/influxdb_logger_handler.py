@@ -1,5 +1,7 @@
 from logging import Handler, getLevelName
-from app.src.observability.metrics_client.influxdb_metrics_client import InfluxDbMetricsClient
+from app.src.observability.metrics_client.influxdb_metrics_client import (
+    InfluxDbMetricsClient,
+)
 
 
 class InfluxDbLoggerHandler(Handler):
@@ -17,18 +19,18 @@ class InfluxDbLoggerHandler(Handler):
     def emit(self, record):
         msg = self.format(record)
         try:
-            self.metrics_client.write("logs",
-                                    {
-                                        # TODO: add bot name and other context
-                                        "level": record.levelname,
-                                        "package": record.name
-                                    },
-                                    {
-                                        "message": msg
-                                    })
+            self.metrics_client.write(
+                "logs",
+                {
+                    # TODO: add bot name and other context
+                    "level": record.levelname,
+                    "package": record.name,
+                },
+                {"message": msg},
+            )
         except Exception:
-            self.handleError(record)
+            return
 
     def __repr__(self):
         level = getLevelName(self.level)
-        return '<%s %s (%s)>' % (self.__class__.__name__, self.baseFilename, level)
+        return "<%s %s (%s)>" % (self.__class__.__name__, self.baseFilename, level)

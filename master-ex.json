@@ -1,0 +1,42 @@
+{
+    "botik": {
+        "type": "tg_bot",
+        "tg_bot": {
+            "username": "botik_bot",
+            "chats": [
+                "1234567890"
+            ],
+            "admins": [
+                "admin_user"
+            ],
+            "users": [],
+            "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+        },
+        "openai": {
+            "token": "sk-1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+            "model": "gpt-3.5-turbo",
+            "temperature": 0.5,
+            "max_tokens": 100
+        }
+    },
+    "obormotic": {
+        "type": "tg_bot",
+        "tg_bot": {
+            "username": "tao_obormotic_bot",
+            "chats": [
+                "1234567890"
+            ],
+            "admins": [
+                "admin_user"
+            ],
+            "users": [],
+            "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+        },
+        "openai": {
+            "token": "sk-1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+            "model": "gpt-3.5-turbo",
+            "temperature": 0.5,
+            "max_tokens": 100
+        }
+    }
+}

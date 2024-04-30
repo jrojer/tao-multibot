@@ -20,25 +20,24 @@ def _getPathOrThrow(env_var: str) -> str:
     return str(path)
 
 
-def _getListOrThrow(env_var: str) -> str:
-    value = _getOrThrow(env_var)
-    return [s.strip() for s in value.split(",")]
+def create_if_not_exists(path: Path) -> Path:
+    if not path.exists():
+        path.mkdir(parents=True)
+    return path
 
 
-def _get_bool_or_throw(env_var: str) -> bool:
-    value = _getOrThrow(env_var)
-    assert value in [
-        "true",
-        "false",
-    ], f"Environment variable {env_var} is not a boolean"
-    return value == "true"
+INFLUXDB_TOKEN = _getOrThrow("INFLUXDB_TOKEN")
+RUNTIME_DATA_DIR = _getPathOrThrow("RUNTIME_DATA_DIR")
+
+LOG_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "log")
+TMP_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "tmp")
+MAIN_CONFIG_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "config")
+
+LOG_PATH = LOG_DIR / "app.log"
+MAIN_CONFIG = MAIN_CONFIG_DIR / "master.json"
 
 
 __test_mode = [False]
-
-LOG_PATH = _getPathOrThrow("LOG_PATH")
-INFLUXDB_TOKEN = _getOrThrow("INFLUXDB_TOKEN")
-TMP_BINARY_STORAGE_PATH = _getPathOrThrow("TMP_BINARY_STORAGE_PATH")
 
 
 def assume_test_mode():
