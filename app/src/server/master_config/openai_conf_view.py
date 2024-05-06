@@ -21,3 +21,13 @@ class GptConfView(GptConf):
 
     def max_tokens(self) -> int:
         return self._conf()["max_tokens"]
+    
+    def top_p(self) -> float:
+        return self._conf()["top_p"]
+    
+    def frequency_penalty(self) -> float:
+        return self._conf()["frequency_penalty"]
+    
+    def presence_penalty(self) -> float:
+        return self._conf()["presence_penalty"]
+    

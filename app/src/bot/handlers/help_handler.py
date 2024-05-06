@@ -1,10 +1,10 @@
-from app.tao.bot.tao_bot.tao_bot_update import TaoBotUpdate
+from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
+from app.src.bot.tao_bot.tao_bot_update import TaoBotUpdate
+from app.src.bot.tao_bot.ui_text import cfg_message
+from app.src.gpt.gpt_conf import GptConf
 
-from app.tao.ui_text import cfg_message
-from app.tao.tao_config import TaoConfig
 
-
-def get_help_command_hadler(config: TaoConfig):
+def get_help_command_hadler(tao_bot_conf: TaoBotConf, gpt_conf: GptConf):
     def handler(update: TaoBotUpdate) -> str:
-        return cfg_message(config.cfg)
+        return cfg_message(tao_bot_conf, gpt_conf)
     return handler

@@ -11,7 +11,6 @@ class GptCompleter(ABC):
     @abstractmethod
     async def complete(
         self,
-        config: GptConf,
         chatform: Chatform,
         functions: List[Dict[str, Any]] = [],
         force_json=False,

@@ -12,7 +12,7 @@ from app.src.butter.functional import first_present
 from app.src.observability.logger import Logger
 from app.src.heads.tg_bot.v1.tg_voice import TgVoice
 from app.src.heads.tg_bot.v1.typing_action import TypingAction
-from app import env
+from app.src import env
 
 logger = Logger(__name__)
 
@@ -116,6 +116,9 @@ class TgApplication:
     def start(self):
         # Run the bot until the user presses Ctrl-C
         self.application.run_polling()
+
+    def stop(self):
+        self.application.stop_running()
 
     def create_handler(self):
         async def async_handle(

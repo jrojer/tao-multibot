@@ -1,8 +1,8 @@
 from uuid import uuid4
 from pathlib import Path
 
-from app.infra import env
-from app.tao.butter.checks import check_required, check_that
+from app.src import env
+from app.src.butter.checks import check_required, check_that
 
 
 class AudioFile:

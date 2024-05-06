@@ -2,10 +2,6 @@ from abc import ABC, abstractmethod
 
 class TaoBotConf(ABC):
     @abstractmethod
-    def bot_id(self) -> str:
-        pass
-    
-    @abstractmethod
     def username(self) -> str:
         pass
 
@@ -33,6 +29,3 @@ class TaoBotConf(ABC):
     def number_of_messages_per_completion(self) -> int:
         pass
 
-    @abstractmethod
-    def control_group(self) -> str:
-        pass

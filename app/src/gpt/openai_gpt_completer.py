@@ -12,20 +12,23 @@ logger = Logger(__name__)
 
 # TODO: consider adding tenacity to retry requests in case of failure.
 class OpenaiGptCompleter(GptCompleter):
+    def __init__(self, config: GptConf):
+        self._config = config
+
     async def complete(
         self,
-        config: GptConf,
         chatform: Chatform,
         functions: List[Dict[str, Any]] = [],
         force_json=False,
     ) -> ChatformMessage:
+        cfg = self._config
         kwargs = {
-            "model": config.model(),
-            "temperature": config.temperature(),
-            "max_tokens": config.max_tokens(),
-            "top_p": config.top_p(),
-            "presence_penalty": config.presence_penalty(),
-            "frequency_penalty": config.frequency_penalty(),
+            "model": cfg.model(),
+            "temperature": cfg.temperature(),
+            "max_tokens": cfg.max_tokens(),
+            "top_p": cfg.top_p(),
+            "presence_penalty": cfg.presence_penalty(),
+            "frequency_penalty": cfg.frequency_penalty(),
             "messages": chatform.messages(),
         }
         if len(functions) > 0:
@@ -40,7 +43,7 @@ class OpenaiGptCompleter(GptCompleter):
                 json=kwargs,
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {config.token()}",
+                    "Authorization": f"Bearer {cfg.token()}",
                 },
             ) as response:
                 response.raise_for_status()

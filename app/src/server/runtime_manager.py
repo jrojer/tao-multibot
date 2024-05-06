@@ -1,9 +1,11 @@
 from app.src.butter.checks import check_required
-from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
 from threading import Thread
-from app.src.server.tg_bot import TgBot
+from app.src.server.api.internal_api_client import InternalApiClient
+from app.src.server.master_config.bot_conf import BotConf
+from app.src.server.master_config.tg_bot_conf import TgBotConf
+from app.src.server.targets.tg_bot_target import TgBotTarget
 
-from app.src.server.master_config.master_config import MasterConfig, TgBotConf
+from app.src.server.master_config.master_config import MasterConfig
 
 
 class RuntimeManager:
@@ -19,12 +21,11 @@ class RuntimeManager:
         for bot_conf in self._master_config.bots():
             self.stop(bot_conf.bot_id())
 
-    def start(self, bot_conf: TaoBotConf):
+    def start(self, bot_conf: BotConf):
         if isinstance(bot_conf, TgBotConf):
-            bot = TgBot(bot_conf)
-            def target():
-                bot.start()
-            thread = Thread(target=target, name=bot_conf.bot_id(), daemon=True)
+            bot = TgBotTarget(bot_conf, InternalApiClient(bot_conf.bot_id(), self._master_config))
+            thread_name = f"{bot_conf.bot_id()}_thread"
+            thread = Thread(target=bot.start, name=thread_name, daemon=True)
             thread.start()
             self._state[bot_conf.bot_id()] = (thread, bot)
         else:

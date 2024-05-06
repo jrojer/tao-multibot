@@ -5,6 +5,10 @@ from app.src.gpt.gpt_conf import GptConf
 
 class BotConf(ABC):
     @abstractmethod
+    def bot_id(self) -> str:
+        pass
+
+    @abstractmethod
     def tao_bot_conf(self) -> TaoBotConf:
         pass
 

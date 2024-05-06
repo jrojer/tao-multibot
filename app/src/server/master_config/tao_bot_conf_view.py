@@ -26,3 +26,13 @@ class TaoBotConfView(TaoBotConf):
 
     def users(self) -> list[str]:
         return self._conf()["users"]
+    
+    def control_chat_id(self) -> str:
+        return self._conf()["control_chat_id"]
+    
+    def system_prompt(self) -> str:
+        return self._conf()["system_prompt"]
+    
+    def number_of_messages_per_completion(self) -> int:
+        return self._conf()["messages_per_completion"]
+

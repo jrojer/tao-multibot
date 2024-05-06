@@ -1,8 +1,8 @@
 import aiohttp
-from app.tao.audio.audio_file import AudioFile
-from app.infra import env
-from app.tao.butter.checks import check_that
-from app.tao.observability.logger import Logger
+from app.src.internal.audio.audio_file import AudioFile
+from app.src import env
+from app.src.butter.checks import check_that
+from app.src.observability.logger import Logger
 
 
 logger = Logger(__name__)

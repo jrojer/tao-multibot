@@ -10,7 +10,6 @@ from app.src.bot.tao_bot.tao_bot_update import TaoBotUpdate
 from app.src.butter.checks import check_required, check_that
 from app.src.gpt.chatform import Chatform
 from app.src.gpt.chatform_message import assistant_message, user_message
-from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.observability.logger import Logger
 
@@ -55,20 +54,18 @@ class TaoBot:
         messages_repo: ChatMessagesRepository,
         gateway: GptGateway,
         config: TaoBotConf,
-        gpt_config: GptConf,
     ) -> None:
-        self.messages_repo = check_required(
+        self._messages_repo = check_required(
             messages_repo, "messages_repo", ChatMessagesRepository
         )
-        self.gateway = check_required(gateway, "gateway", GptGateway)
-        self.conf = check_required(config, "config", TaoBotConf)
-        self.gpt_config = check_required(gpt_config, "gpt_config", GptConf)
+        self._gateway = check_required(gateway, "gpt_gateway", GptGateway)
+        self._conf = check_required(config, "config", TaoBotConf)
 
     def bot_username(self):
-        return self.conf.username()
+        return self._conf.username()
 
     def is_authorised(self, from_user: str, chat_id: Optional[str]):
-        cfg = self.conf
+        cfg = self._conf
         authorised = (
             chat_id is not None
             and chat_id == cfg.control_chat_id()
@@ -83,10 +80,10 @@ class TaoBot:
         return authorised
 
     def _build_chatform(self, chat_id: str) -> Chatform:
-        system_prompt = self.conf.system_prompt()
+        system_prompt = self._conf.system_prompt()
         chatform = Chatform(system_prompt)
-        messages = self.messages_repo.fetch_last_messages_by_chat_id(
-            chat_id, self.conf.number_of_messages_for_completion()
+        messages = self._messages_repo.fetch_last_messages_by_chat_id(
+            chat_id, self._conf.number_of_messages_per_completion()
         )
         for m in reversed(messages):
             if m.username == self.bot_username():
@@ -96,6 +93,7 @@ class TaoBot:
         return chatform
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
+        # TODO: the bot should know the message the current update replied to
         check_that(
             self.is_authorised(update.from_user(), update.chat_id()),
             "tao update must be authorised",
@@ -104,7 +102,7 @@ class TaoBot:
         _log_update(update, "Noted")
 
         # TODO: consider adding a separate layer class that manages db, summariser, etc. and calls tao-bot process function
-        self.messages_repo.add(_a_chat_messasge_from(update))
+        self._messages_repo.add(_a_chat_messasge_from(update))
 
         async def postreply_action():
             pass
@@ -118,9 +116,9 @@ class TaoBot:
         async def reply_action():
             _log_update(update, "Processing")
 
-            reply_text = await self.gateway.forward(
+            reply_text = await self._gateway.forward(
                 chatform,
-                self.gpt_config,
+                self._conf,
                 [],
             )
             if reply_text is None:
@@ -138,7 +136,7 @@ class TaoBot:
             logger.info("Replying %s@%s-%s: %s", self.bot_username(), update.chat_name(), update.chat_id(), reply_text)
             # fmt: on
 
-            self.messages_repo.add(bot_message)
+            self._messages_repo.add(bot_message)
             return reply_text
 
         return reply(reply_action, postreply_action)

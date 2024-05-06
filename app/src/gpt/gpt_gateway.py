@@ -3,7 +3,6 @@ from app.src.butter.checks import check_required
 from app.src.gpt.chatform import Chatform
 from app.src.gpt.chatform_message import ChatformMessage, function_result_message
 from app.src.gpt.gpt_completer import GptCompleter
-from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.plugin import Plugin
 from app.src.observability.logger import Logger
 
@@ -15,14 +14,13 @@ class GptGateway:
     MAX_NUM_OF_FUNCTION_CALLS = 20
 
     def __init__(self, gpt_completer: GptCompleter):
-        self.gpt_completer = check_required(
+        self._gpt_completer = check_required(
             gpt_completer, "gpt_completer", GptCompleter
         )
 
     async def forward(
         self,
         chatform: Chatform,
-        completer_config: GptConf,
         plugins: List[Plugin] = [],
     ) -> ChatformMessage:
         manifests = [
@@ -34,8 +32,8 @@ class GptGateway:
             for function in p.functions()
         }
 
-        response_message: ChatformMessage = await self.gpt_completer.complete(
-            completer_config, chatform, manifests
+        response_message: ChatformMessage = await self._gpt_completer.complete(
+            chatform, manifests
         )
 
         function_call: Optional[ChatformMessage.FunctionCall] = (
@@ -60,9 +58,7 @@ class GptGateway:
 
             chatform.add_message(function_result_message(function_call.name(), result))
 
-            response_message = await self.gpt_completer.complete(
-                completer_config, chatform, manifests
-            )
+            response_message = await self._gpt_completer.complete(chatform, manifests)
 
             function_call = response_message.function_call()
             num_of_function_calls += 1
