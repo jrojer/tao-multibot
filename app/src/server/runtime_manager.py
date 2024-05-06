@@ -1,9 +1,9 @@
 from app.src.butter.checks import check_required
-from app.src.server.bot_conf import BotConf, TgBotConf
+from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
 from threading import Thread
 from app.src.server.tg_bot import TgBot
 
-from app.src.server.master_config import MasterConfig
+from app.src.server.master_config.master_config import MasterConfig, TgBotConf
 
 
 class RuntimeManager:
@@ -19,7 +19,7 @@ class RuntimeManager:
         for bot_conf in self._master_config.bots():
             self.stop(bot_conf.bot_id())
 
-    def start(self, bot_conf: BotConf):
+    def start(self, bot_conf: TaoBotConf):
         if isinstance(bot_conf, TgBotConf):
             bot = TgBot(bot_conf)
             def target():

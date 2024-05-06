@@ -1,4 +1,4 @@
-from app.src.server.master_config import MasterConfig
+from app.src.server.master_config.master_config import MasterConfig
 from app.src.server.runtime_manager import RuntimeManager
 
 
