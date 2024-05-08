@@ -59,7 +59,7 @@ class TgBotTarget:
 
             loop = asyncio.get_event_loop()
             asyncio.ensure_future(wait_for_stop(), loop=loop)
-            threading.current_thread().name = f"{self._bot_conf.bot_id()}_thread"
+            threading.current_thread().name = self._bot_conf.bot_id()
             reconfigure_logging()
             logger.info(f"Starting bot {self._bot_conf.bot_id()}, pid {this_pid} of parent {parent_id}")
             application.start()

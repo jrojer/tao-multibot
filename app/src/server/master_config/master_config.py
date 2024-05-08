@@ -5,7 +5,8 @@ from app.src.butter.checks import check_required
 from app.src.server.master_config.bot_conf import BotConf
 from app.src.server.master_config.tg_bot_conf_view import TgBotConfView
 
-
+# TODO: add checks:
+# - check that tg tokens are unique
 class MasterConfig:
     class Modifier:
         def __init__(self, mem: list[dict[str, Any]]):
