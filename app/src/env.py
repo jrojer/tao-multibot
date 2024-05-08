@@ -28,6 +28,8 @@ def create_if_not_exists(path: Path) -> Path:
 
 INFLUXDB_TOKEN = _getOrThrow("INFLUXDB_TOKEN")
 RUNTIME_DATA_DIR = _getPathOrThrow("RUNTIME_DATA_DIR")
+DEBUG = _getOrThrow("DEBUG") == "True"
+SERVER_PORT = _getOrThrow("SERVER_PORT")
 
 LOG_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "log")
 TMP_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "tmp")

@@ -11,8 +11,8 @@ AUDIO_INITIAL_PROMPT = ""
 
 
 class AudioTranscriptor:
-    def __init__(self, token: str):
-        self._token = check_required(token, "token", str)
+    def __init__(self, openai_token: str):
+        self._token = check_required(openai_token, "openai_token", str)
 
     async def transcribe(self, audio_file: AudioFile, prompt: str = "") -> str:
         check_that(audio_file.is_wav(), "Audio file must be in wav format")
@@ -37,4 +37,8 @@ class AudioTranscriptor:
         async with aiohttp.ClientSession() as session:
             async with session.post(url, headers=headers, data=data) as response:
                 response_data = await response.json()
+                if "error" in response_data:
+                    logger.error(
+                        "Failed to transcribe audio: %s", response_data["error"]
+                    )
                 return response_data.get("text")

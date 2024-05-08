@@ -13,6 +13,10 @@ from app.src.butter.clock import timestamp_now
 from app.src.butter.functional import first_present
 from app.src.gpt.chatform_message import ChatformMessage
 from app.src.heads.tg_bot.v1.tg_bot_wrapper import TgBotWrapper
+from app.src.heads.tg_bot.v1.tg_voice_downloader import TgVoiceDownloader
+from app.src.internal.audio.audio_file import AudioFile
+from app.src.internal.audio.audio_transcriptor import AudioTranscriptor
+from app.src.internal.audio.ogg_wav_converter import OggWavConverter
 from app.src.observability.logger import Logger
 from app.src.heads.tg_bot.v1.tg_voice import TgVoice
 from app.src.heads.tg_bot.v1.typing_action import TypingAction
@@ -87,16 +91,17 @@ async def safe_reply_markdown(update: Update, post: str) -> None:
 
 
 class TgApplication:
-    def __init__(self, bot: TaoBot, bot_commands: TaoBotCommands, tg_token: str):
-        self.bot: TaoBot = check_required(bot, "bot", TaoBot)
-        self.commands: TaoBotCommands = check_required(
+    def __init__(self, bot: TaoBot, bot_commands: TaoBotCommands, tg_token: str, openai_token: str):
+        self._bot: TaoBot = check_required(bot, "bot", TaoBot)
+        self._commands: TaoBotCommands = check_required(
             bot_commands, "bot_commands", TaoBotCommands
         )
-        self.application = Application.builder().token(tg_token).build()
-        self.application.add_handler(
+        self._application = Application.builder().token(tg_token).build()
+        self._application.add_handler(
             MessageHandler(filters.TEXT | filters.VOICE, self.create_handler())
         )
-        self.tg_bot: TgBotWrapper = TgBotWrapper(self.application.bot)
+        self._tg_bot: TgBotWrapper = TgBotWrapper(self._application.bot)
+        self._openai_token = check_required(openai_token, "openai_token", str)
 
     def to_tao_update(
         self, update: Update, transcription: Optional[str] = None
@@ -111,21 +116,21 @@ class TgApplication:
             .chat_name(message.chat.effective_name)
             .post(message.text if transcription is None else transcription)
             .timestamp(timestamp_now())
-            .is_reply_to_bot(is_reply_to_bot(message, self.bot.bot_username()))
+            .is_reply_to_bot(is_reply_to_bot(message, self._bot.bot_username()))
             .is_dm_to_bot(is_direct_message(message))
             .is_chat_mention_of_bot(
-                is_chat_mention_of_bot(message, self.bot.bot_username())
-                or contains_bot_name(transcription, self.bot.bot_mention_names())
+                is_chat_mention_of_bot(message, self._bot.bot_username())
+                or contains_bot_name(transcription, self._bot.bot_mention_names())
             )
             .build()
         )
 
     def start(self):
         # Run the bot until the user presses Ctrl-C
-        self.application.run_polling()
+        self._application.run_polling()
 
     def stop(self):
-        self.application.stop_running()
+        self._application.stop_running()
 
     def create_handler(self):
         async def async_handle(
@@ -138,33 +143,36 @@ class TgApplication:
                 logger.error("Received unexpected update without a message: %s", update)
                 return
 
-            if not self.bot.is_authorised(
+            if not self._bot.is_authorised(
                 extract_username(update), extract_chat_id(update)
             ):
                 return
 
             if update.message.voice is not None:
+                ogg_file: AudioFile = await TgVoiceDownloader(self._tg_bot).download(
+                    update.message.voice.file_id
+                )
                 transcription = await TgVoice(
-                    self.tg_bot, update.message.voice
-                ).transcribe()
+                    self._tg_bot, AudioTranscriptor(self._openai_token), OggWavConverter()
+                ).transcribe(ogg_file)
                 tao_update = self.to_tao_update(update, transcription)
             else:
                 tao_update = self.to_tao_update(update)
 
-            commands_response: TaoBotCommandsResponse = self.commands.handle_command(
-                self.bot.bot_username(), tao_update
+            commands_response: TaoBotCommandsResponse = self._commands.handle_command(
+                self._bot.bot_username(), tao_update
             )
             if commands_response.reply_action is not None:
                 command_response: str = await commands_response.reply_action()
                 await safe_reply_markdown(update, command_response)
                 return
 
-            bot_response: TaoBotResponse = await self.bot.process_incoming_update(
+            bot_response: TaoBotResponse = await self._bot.process_incoming_update(
                 tao_update
             )
 
             if bot_response.reply_action is not None:
-                with TypingAction.show_typing(self.tg_bot, tao_update.chat_id()):
+                with TypingAction.show_typing(self._tg_bot, tao_update.chat_id()):
                     chat_message: ChatformMessage = await bot_response.reply_action()
                     await safe_reply_markdown(update, chat_message.content())
 

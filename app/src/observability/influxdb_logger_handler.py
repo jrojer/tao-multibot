@@ -26,6 +26,7 @@ class InfluxDbLoggerHandler(Handler):
                     # TODO: add bot name and other context
                     "level": record.levelname,
                     "package": record.name,
+                    "thread": record.threadName,
                 },
                 {"message": msg},
             )

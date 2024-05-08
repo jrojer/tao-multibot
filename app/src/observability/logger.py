@@ -1,13 +1,34 @@
 import logging
+import threading
 from typing import Any
 from app.src import env
 from app.src.observability.influxdb_logger_handler import InfluxDbLoggerHandler
 
 logging.basicConfig(
-    format="%(threadName)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
-    handlers=[logging.FileHandler(env.LOG_PATH), InfluxDbLoggerHandler()],
+    handlers=[
+        logging.FileHandler(env.LOG_DIR / (threading.current_thread().name + ".log")),
+        InfluxDbLoggerHandler(),
+    ],
 )
+
+
+# NOTE: this is a workaround to reconfigure logging after forking
+# TODO: think about a better way to reconfigure logging
+def reconfigure_logging():
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+        handlers=[
+            logging.FileHandler(
+                env.LOG_DIR / (threading.current_thread().name + ".log")
+            ),
+            InfluxDbLoggerHandler(),
+        ],
+    )
 
 
 class Logger:

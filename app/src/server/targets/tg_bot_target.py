@@ -18,7 +18,7 @@ from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.gpt.openai_gpt_completer import OpenaiGptCompleter
 from app.src.heads.tg_bot.v1.tg_application import TgApplication
-from app.src.observability.logger import Logger
+from app.src.observability.logger import Logger, reconfigure_logging
 from app.src.server.api.api_client import ApiClient
 from app.src.server.master_config.tg_bot_conf import TgBotConf
 
@@ -46,18 +46,20 @@ class TgBotTarget:
         bot_commands: TaoBotCommands = TaoBotCommands(
             self._api_client, tao_bot_conf, gpt_conf
         )
-        application = TgApplication(tao_bot, bot_commands, tg_token)
+        application = TgApplication(tao_bot, bot_commands, tg_token, gpt_conf.token())
 
         if not in_test_mode():
-
+            this_pid: int = os.getpid()
             async def wait_for_stop():
-                while not stop_event.is_set() and (not is_subprocess or os.getppid() == parent_id):
+                while not stop_event.is_set() and (not is_subprocess or this_pid != parent_id):
                     await asyncio.sleep(1)
+                logger.info(f"Stopping bot {self._bot_conf.bot_id()}, pid {this_pid} of parent {parent_id}")
                 # NOTE: This is effectively `asyncio.get_running_loop().stop()`
                 application.stop()
 
             loop = asyncio.get_event_loop()
             asyncio.ensure_future(wait_for_stop(), loop=loop)
             threading.current_thread().name = f"{self._bot_conf.bot_id()}_thread"
-            logger.info(f"Starting bot {self._bot_conf.bot_id()}")
+            reconfigure_logging()
+            logger.info(f"Starting bot {self._bot_conf.bot_id()}, pid {this_pid} of parent {parent_id}")
             application.start()
