@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, List
 from app.src.gpt.chatform_message import ChatformMessage, system_message
 from app.src.observability.logger import Logger
 
@@ -35,7 +35,7 @@ class Chatform:
     def clear(self):
         self._messages = []
 
-    def messages(self) -> dict:
+    def messages(self) -> list[dict[str, Any]]:
         result = [self._system_prompt.to_dict()]
         for message in self._messages:
             result.append(message.to_dict())

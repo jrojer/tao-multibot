@@ -19,10 +19,10 @@ class OpenaiGptCompleter(GptCompleter):
         self,
         chatform: Chatform,
         functions: List[Dict[str, Any]] = [],
-        force_json=False,
+        force_json: bool = False,
     ) -> ChatformMessage:
         cfg = self._config
-        kwargs = {
+        kwargs: dict[str, Any] = {
             "model": cfg.model(),
             "temperature": cfg.temperature(),
             "max_tokens": cfg.max_tokens(),

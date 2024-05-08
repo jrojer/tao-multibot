@@ -8,7 +8,7 @@ from app.src.server.master_config.tg_bot_conf import TgBotConf
 
 
 class TgBotConfView(TgBotConf):
-    def __init__(self, mem: list[dict[dict[str, Any]]], bot_id: str):
+    def __init__(self, mem: list[dict[str, Any]], bot_id: str):
         self._mem = mem
         self._bot_id = bot_id
         self._tao_bot_conf: TaoBotConf = TaoBotConfView(mem, bot_id)

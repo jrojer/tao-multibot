@@ -3,7 +3,7 @@ from app.src.gpt.gpt_conf import GptConf
 
 
 class GptConfView(GptConf):
-    def __init__(self, mem: list[dict[dict[str, Any]]], bot_id: str):
+    def __init__(self, mem: list[dict[str, Any]], bot_id: str):
         self._mem = mem
         self._bot_id = bot_id
 

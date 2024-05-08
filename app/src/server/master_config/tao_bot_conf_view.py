@@ -5,7 +5,7 @@ from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
 
 
 class TaoBotConfView(TaoBotConf):
-    def __init__(self, mem: list[dict[dict[str, Any]]], bot_id: str):
+    def __init__(self, mem: list[dict[str, Any]], bot_id: str):
         self._mem = mem
         self._bot_id = bot_id
 
@@ -35,4 +35,6 @@ class TaoBotConfView(TaoBotConf):
     
     def number_of_messages_per_completion(self) -> int:
         return self._conf()["messages_per_completion"]
-
+    
+    def bot_mention_names(self) -> list[str]:
+        return self._conf()["bot_mention_names"]

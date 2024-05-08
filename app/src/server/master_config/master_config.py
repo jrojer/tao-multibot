@@ -8,7 +8,7 @@ from app.src.server.master_config.tg_bot_conf_view import TgBotConfView
 
 class MasterConfig:
     class Modifier:
-        def __init__(self, mem: list[dict[dict[str, Any]]]):
+        def __init__(self, mem: list[dict[str, Any]]):
             self._mem = mem
 
         def _save(self):
@@ -45,7 +45,7 @@ class MasterConfig:
    
     def __init__(self):
         with open(env.MAIN_CONFIG, "r") as f:
-            self._mem: list[dict[dict[str, Any]]] = [None]
+            self._mem: list[dict[str, Any]] = [{}]
             self._mem[0] = check_required(json.load(f), "config", dict)
 
     def bot_conf(self, bot_id: str) -> BotConf:

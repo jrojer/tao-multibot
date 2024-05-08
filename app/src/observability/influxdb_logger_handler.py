@@ -1,3 +1,4 @@
+# type: ignore
 from logging import Handler, getLevelName
 from app.src.observability.metrics_client.influxdb_metrics_client import (
     InfluxDbMetricsClient,

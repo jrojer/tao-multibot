@@ -9,7 +9,7 @@ from app.src.bot.tao_bot.tao_bot_response import TaoBotResponse, reply
 from app.src.bot.tao_bot.tao_bot_update import TaoBotUpdate
 from app.src.butter.checks import check_required, check_that
 from app.src.gpt.chatform import Chatform
-from app.src.gpt.chatform_message import assistant_message, user_message
+from app.src.gpt.chatform_message import ChatformMessage, assistant_message, user_message
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.observability.logger import Logger
 
@@ -17,7 +17,7 @@ from app.src.observability.logger import Logger
 logger = Logger(__name__)
 
 
-def _log_update(update: TaoBotUpdate, text: str, cf_size=0):
+def _log_update(update: TaoBotUpdate, text: str, cf_size: int=0):
     logger.info(
         text + " %s@%s-%s[%s]: %s",
         update.from_user(),
@@ -58,11 +58,14 @@ class TaoBot:
         self._messages_repo = check_required(
             messages_repo, "messages_repo", ChatMessagesRepository
         )
-        self._gateway = check_required(gateway, "gpt_gateway", GptGateway)
-        self._conf = check_required(config, "config", TaoBotConf)
+        self._gateway: GptGateway = check_required(gateway, "gpt_gateway", GptGateway)
+        self._conf: TaoBotConf = check_required(config, "config", TaoBotConf)
 
-    def bot_username(self):
+    def bot_username(self) -> str:
         return self._conf.username()
+    
+    def bot_mention_names(self) -> list[str]:
+        return self._conf.bot_mention_names()
 
     def is_authorised(self, from_user: str, chat_id: Optional[str]):
         cfg = self._conf
@@ -87,9 +90,9 @@ class TaoBot:
         )
         for m in reversed(messages):
             if m.username == self.bot_username():
-                chatform.add_message(assistant_message(m.post))
+                chatform.add_message(assistant_message(m.post()))
             else:
-                chatform.add_message(user_message(m.post, m.username))
+                chatform.add_message(user_message(m.post(), m.username()))
         return chatform
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
@@ -113,22 +116,19 @@ class TaoBot:
         chatform: Chatform = self._build_chatform(update.chat_id())
 
         # TODO: as process_incoming_update became async, consider simplifying this nested async
-        async def reply_action():
+        async def reply_action() -> ChatformMessage:
             _log_update(update, "Processing")
 
-            reply_text = await self._gateway.forward(
+            reply_text: ChatformMessage = await self._gateway.forward(
                 chatform,
-                self._conf,
                 [],
             )
-            if reply_text is None:
-                return None
 
             bot_message = (
                 ChatMessage.new()
                 .chat_id(update.chat_id())
                 .username(self.bot_username())
-                .post(reply_text)
+                .post(reply_text.content())
                 .build()
             )
 

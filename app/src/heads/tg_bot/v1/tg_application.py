@@ -4,111 +4,118 @@ from telegram.ext import ContextTypes
 from telegram import Update, Message
 from telegram.error import BadRequest
 from app.src.bot.tao_bot.tao_bot import TaoBot
-from app.src.bot.tao_bot.tao_bot_commands import TaoBotCommands, TaoBotResponse
+from app.src.bot.tao_bot.tao_bot_commands import TaoBotCommands
+from app.src.bot.tao_bot.tao_bot_commands_response import TaoBotCommandsResponse
+from app.src.bot.tao_bot.tao_bot_response import TaoBotResponse
 from app.src.bot.tao_bot.tao_bot_update import TaoBotUpdate
 from app.src.butter.checks import check_required
 from app.src.butter.clock import timestamp_now
 from app.src.butter.functional import first_present
+from app.src.gpt.chatform_message import ChatformMessage
+from app.src.heads.tg_bot.v1.tg_bot_wrapper import TgBotWrapper
 from app.src.observability.logger import Logger
 from app.src.heads.tg_bot.v1.tg_voice import TgVoice
 from app.src.heads.tg_bot.v1.typing_action import TypingAction
-from app.src import env
 
 logger = Logger(__name__)
 
 
-def extract_username(update: Update):
-    message: Message = update.message
-    return first_present(
+def extract_username(update: Update) -> str:
+    username = "unknown"
+    message: Optional[Message] = update.message
+    if message is None:
+        return username
+
+    username = first_present(
         [
             lambda: message.chat.username,
             lambda: (
-                message.forward_from.username
-                if message.forward_from is not None
-                else None
+                message.from_user.username if message.from_user is not None else None
             ),
-            lambda: message.forward_sender_name,
-            lambda: message.from_user.username,
         ]
     )
+    if username is None:
+        logger.error("Could not extract username from update: %s", update)
+    return username
 
 
 def extract_chat_id(update: Update) -> str:
     topic_id = ""
+    message: Message = check_required(update.message, "update.message", Message)
     if (
-        update.message.is_topic_message is not None
-        and update.message.is_topic_message == True
-        and update.message.message_thread_id is not None
+        message.is_topic_message is not None
+        and message.is_topic_message == True
+        and message.message_thread_id is not None
     ):
-        topic_id = "/" + str(update.message.message_thread_id)
-    return str(update.message.chat_id) + topic_id
+        topic_id = "/" + str(message.message_thread_id)
+    return str(message.chat_id) + topic_id
 
 
-def is_direct_message(message: Message):
+def is_direct_message(message: Message) -> bool:
     return message.chat.first_name is not None
 
 
-def is_reply_to_bot(message: Message, bot_username: str):
+def is_reply_to_bot(message: Message, bot_username: str) -> bool:
     return (
         message.reply_to_message is not None
+        and message.reply_to_message.from_user is not None
         and message.reply_to_message.from_user.username == bot_username
     )
 
 
-def is_chat_mention_of_bot(message: Message, bot_username: str):
-    return f"@{bot_username}" in message.text
+def is_chat_mention_of_bot(message: Message, bot_username: str) -> bool:
+    return message.text is not None and f"@{bot_username}" in message.text
 
 
-def contains_bot_name(text: str) -> bool:
+def contains_bot_name(text: Optional[str], name_list: list[str]) -> bool:
     if text is None:
         return False
 
-    def capitalised(name: str):
+    def capitalised(name: str) -> str:
         return name[0].upper() + name[1:]
 
-    return any(
-        (name in text or capitalised(name) in text) for name in env.BOT_NAME_LIST
-    )
+    return any((name in text or capitalised(name) in text) for name in name_list)
 
 
 async def safe_reply_markdown(update: Update, post: str) -> None:
+    message: Message = check_required(update.message, "update.message", Message)
     try:
-        await update.message.reply_markdown(post)
+        await message.reply_markdown(post)
     except BadRequest:
         # TODO: find out why bot generated post is not accepted. This leads to ugly messages sometimes.
-        await update.message.reply_text(post)
+        await message.reply_text(post)
 
 
 class TgApplication:
     def __init__(self, bot: TaoBot, bot_commands: TaoBotCommands, tg_token: str):
-        self.bot = check_required(bot, "bot", TaoBot)
-        self.commands = check_required(bot_commands, "bot_commands", TaoBotCommands)
+        self.bot: TaoBot = check_required(bot, "bot", TaoBot)
+        self.commands: TaoBotCommands = check_required(
+            bot_commands, "bot_commands", TaoBotCommands
+        )
         self.application = Application.builder().token(tg_token).build()
         self.application.add_handler(
             MessageHandler(filters.TEXT | filters.VOICE, self.create_handler())
         )
-        self.tg_bot = self.application.bot
+        self.tg_bot: TgBotWrapper = TgBotWrapper(self.application.bot)
 
     def to_tao_update(
         self, update: Update, transcription: Optional[str] = None
     ) -> TaoBotUpdate:
-        check_required(update.message, "update.message")
+        message: Message = check_required(update.message, "update.message", Message)
         username = extract_username(update)
-        if username is None:
-            logger.error("Could not extract username from update: %s", update)
-            username = "unknown"
+
         return (
             TaoBotUpdate.new()
             .chat_id(extract_chat_id(update))
             .from_user(username)
-            .chat_name(update.message.chat.effective_name)
-            .post(update.message.text if transcription is None else f"{transcription}")
+            .chat_name(message.chat.effective_name)
+            .post(message.text if transcription is None else transcription)
             .timestamp(timestamp_now())
-            .is_reply_to_bot(is_reply_to_bot(update.message, self.bot.bot_username()))
-            .is_dm_to_bot(is_direct_message(update.message))
+            .is_reply_to_bot(is_reply_to_bot(message, self.bot.bot_username()))
+            .is_dm_to_bot(is_direct_message(message))
             .is_chat_mention_of_bot(
-                is_chat_mention_of_bot(update.message, self.bot.bot_username())
-                or contains_bot_name(transcription)
+                is_chat_mention_of_bot(message, self.bot.bot_username())
+                or contains_bot_name(transcription, self.bot.bot_mention_names())
             )
             .build()
         )
@@ -144,28 +151,24 @@ class TgApplication:
             else:
                 tao_update = self.to_tao_update(update)
 
-            commands_response = self.commands.handle_command(
+            commands_response: TaoBotCommandsResponse = self.commands.handle_command(
                 self.bot.bot_username(), tao_update
             )
-            if not commands_response.no_reply():
-                post: str = await commands_response.reply_action()
-                await safe_reply_markdown(update, post)
+            if commands_response.reply_action is not None:
+                command_response: str = await commands_response.reply_action()
+                await safe_reply_markdown(update, command_response)
                 return
 
             bot_response: TaoBotResponse = await self.bot.process_incoming_update(
                 tao_update
             )
 
-            # TODO: change to has_reply()
-            if not bot_response.no_reply():
+            if bot_response.reply_action is not None:
                 with TypingAction.show_typing(self.tg_bot, tao_update.chat_id()):
-                    post: str = await bot_response.reply_action()
+                    chat_message: ChatformMessage = await bot_response.reply_action()
+                    await safe_reply_markdown(update, chat_message.content())
 
-                if post is not None:
-                    await safe_reply_markdown(update, post)
-
-            # TODO: rename postreply to something more suitable
-            if bot_response.has_postreply():
+            if bot_response.postreply_action is not None:
                 await bot_response.postreply_action()
 
         return async_handle

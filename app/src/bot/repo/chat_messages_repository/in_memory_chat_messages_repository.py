@@ -5,7 +5,7 @@ from app.src.bot.repo.chat_messages_repository.chat_messages_repository import C
 
 class InMemoryMessagesRepository(ChatMessagesRepository):
     def __init__(self):
-        self._messages = {}
+        self._messages: dict[str, ChatMessage] = {}
 
     def update_by_id(self, message: ChatMessage, id: str) -> None:
         self._messages[id] = message

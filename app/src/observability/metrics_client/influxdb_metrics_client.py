@@ -1,3 +1,4 @@
+# type: ignore
 import logging
 # TODO: use http API instead of python client
 from influxdb_client import InfluxDBClient, Point
@@ -16,7 +17,7 @@ bucket = "bucket"
 
 
 class InfluxDbMetricsClient(MetricsClient):
-    def __init__(self) -> None:
+    def __init__(self):
         self.client = InfluxDBClient(url=url, token=token, org=org)
         self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
 

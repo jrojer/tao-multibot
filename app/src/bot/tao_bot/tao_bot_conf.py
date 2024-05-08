@@ -29,3 +29,6 @@ class TaoBotConf(ABC):
     def number_of_messages_per_completion(self) -> int:
         pass
 
+    @abstractmethod
+    def bot_mention_names(self) -> list[str]:
+        pass

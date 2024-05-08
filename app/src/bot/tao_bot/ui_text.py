@@ -16,8 +16,8 @@ DISASBLE_IN_CURRENT_GROUP = '0'
 UPDATE_ACCESS = 'access'
 SET_NUMBER_OF_MESSAGES_PER_COMPLETION = 'snmfc'
 
-def _escape_markdown(text):
-    escape_chars = '\*_`\['
+def _escape_markdown(text: str) -> str:
+    escape_chars = r'*_`['
     return re.sub(r'([%s])' % escape_chars, r'\\\1', text)
 
 def cfg_message(tao_bot_conf: TaoBotConf, gpt_conf: GptConf):

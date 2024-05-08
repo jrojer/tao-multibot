@@ -13,7 +13,9 @@ def timestamp_now():
     return int(datetime.datetime.now(datetime.timezone.utc).timestamp())
 
 
-def timestamp_to_readable_datetime(timestamp: int, tz=datetime.timezone.utc) -> str:
+def timestamp_to_readable_datetime(
+    timestamp: int, tz: datetime.timezone = datetime.timezone.utc
+) -> str:
     return datetime.datetime.fromtimestamp(timestamp, tz=tz).strftime(
         "%Y-%m-%d %H:%M:%S"
     )

@@ -1,7 +1,7 @@
 from app.src.bot.handlers.start_handler import get_start_handler
 from app.src.bot.handlers.update_access_handler import get_update_access_handler
+from app.src.bot.tao_bot.tao_bot_commands_response import TaoBotCommandsResponse, ignore, reply
 from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
-from app.src.bot.tao_bot.tao_bot_response import TaoBotResponse, ignore, reply_text
 from app.src.butter.checks import check_required
 from app.src.gpt.gpt_conf import GptConf
 from app.src.observability.logger import Logger
@@ -40,9 +40,9 @@ class TaoBotCommands:
     def __init__(
         self, client: ApiClient, tao_bot_conf: TaoBotConf, gpt_conf: GptConf
     ) -> None:
-        self._client = check_required(client, "client", ApiClient)
-        self._tao_bot_conf = check_required(tao_bot_conf, "tao_bot_conf", TaoBotConf)
-        self._gpt_conf = check_required(gpt_conf, "gpt_conf", GptConf)
+        self._client: ApiClient = check_required(client, "client", ApiClient)
+        self._tao_bot_conf: TaoBotConf = check_required(tao_bot_conf, "tao_bot_conf", TaoBotConf)
+        self._gpt_conf: GptConf = check_required(gpt_conf, "gpt_conf", GptConf)
 
     def _commands(self):
         return {
@@ -58,11 +58,9 @@ class TaoBotCommands:
         }
 
     def _is_authorised(self, update: TaoBotUpdate) -> bool:
-        cfg = self._client
         return (
-            update.chat_id() is not None
-            and update.chat_id() == cfg.get_control_group()
-            or update.from_user() in cfg.get_admins()
+            update.chat_id() == self._tao_bot_conf.control_chat_id()
+            or update.from_user() in self._tao_bot_conf.admins()
         )
 
     def _is_command_for(self, bot_username: str, update: TaoBotUpdate) -> bool:
@@ -80,11 +78,11 @@ class TaoBotCommands:
 
     def handle_command(
         self, bot_username: str, tao_update: TaoBotUpdate
-    ) -> TaoBotResponse:
+    ) -> TaoBotCommandsResponse:
         if self._is_command_for(bot_username, tao_update):
             if self._is_authorised(tao_update):
-                command_reply = self._run_command_for(bot_username, tao_update)
-                return reply_text(command_reply)
+                command_reply: str = self._run_command_for(bot_username, tao_update)
+                return reply(command_reply)
             else:
                 logger.warning(
                     f'An attempt to call "{tao_update.post()}" from {tao_update.chat_id()}. Skipping execution.'

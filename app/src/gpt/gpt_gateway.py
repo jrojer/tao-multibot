@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 from app.src.butter.checks import check_required
 from app.src.gpt.chatform import Chatform
 from app.src.gpt.chatform_message import ChatformMessage, function_result_message
@@ -23,8 +23,10 @@ class GptGateway:
         chatform: Chatform,
         plugins: List[Plugin] = [],
     ) -> ChatformMessage:
-        manifests = [
-            function["manifest"] for p in plugins for function in p.functions()
+        manifests: list[dict[str, Any]] = [
+            function["manifest"] 
+            for p in plugins 
+            for function in p.functions()
         ]
         plugin_by_function_name = {
             function["manifest"]["name"]: p
@@ -63,7 +65,6 @@ class GptGateway:
             function_call = response_message.function_call()
             num_of_function_calls += 1
             if num_of_function_calls >= GptGateway.MAX_NUM_OF_FUNCTION_CALLS:
-                logger.error("Max number of function calls exceeded.")
-                return None
+                raise RuntimeError("Max number of function calls exceeded.")
 
         return response_message

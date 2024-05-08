@@ -1,5 +1,4 @@
 import asyncio
-import os
 from app.src.internal.audio.audio_file import AudioFile
 from app.src.butter.checks import check_that
 from app.src.observability.logger import Logger
@@ -20,6 +19,6 @@ class OggWavConverter:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        stdout, stderr = await proc.communicate()
+        _, stderr = await proc.communicate()
         logger.info(stderr.decode())
         return AudioFile.from_path(new_file_path)

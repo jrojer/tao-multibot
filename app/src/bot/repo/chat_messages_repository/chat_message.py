@@ -1,3 +1,4 @@
+from typing import Any
 from app.src.butter.checks import check_required, check_type
 from app.src.butter.clock import timestamp_now, timestamp_to_readable_datetime
 from app.src.butter.functional import or_else
@@ -14,23 +15,23 @@ class ChatMessage:
             self._post = None
             self._timestamp_value = None
 
-        def id(self, id) -> "ChatMessage.Builder":
+        def id(self, id: str) -> "ChatMessage.Builder":
             self._id = id
             return self
 
-        def chat_id(self, chat_id) -> "ChatMessage.Builder":
+        def chat_id(self, chat_id: str) -> "ChatMessage.Builder":
             self._chat_id = chat_id
             return self
 
-        def username(self, username) -> "ChatMessage.Builder":
+        def username(self, username: str) -> "ChatMessage.Builder":
             self._username = username
             return self
 
-        def post(self, post) -> "ChatMessage.Builder":
+        def post(self, post: str) -> "ChatMessage.Builder":
             self._post = post
             return self
 
-        def timestamp(self, timestamp) -> "ChatMessage.Builder":
+        def timestamp(self, timestamp: int) -> "ChatMessage.Builder":
             self._timestamp_value = timestamp
             return self
 
@@ -42,33 +43,33 @@ class ChatMessage:
         return ChatMessage.Builder()
 
     def __init__(self, builder: Builder):
-        self._id = or_else(builder._id, str(uuid4()))
-        self._chat_id = check_required(builder._chat_id, "chat_id", str)
-        self._username = check_required(builder._username, "username", str)
-        self._post = check_required(builder._post, "post", str)
+        self._id = or_else(builder._id, lambda: str(uuid4())) # type: ignore
+        self._chat_id = check_required(builder._chat_id, "chat_id", str) # type: ignore
+        self._username = check_required(builder._username, "username", str) # type: ignore
+        self._post = check_required(builder._post, "post", str) # type: ignore
         self._timestamp = or_else(
-            check_type(builder._timestamp_value, "timestamp", int), timestamp_now
-        )
+            check_type(builder._timestamp_value, "timestamp", int), timestamp_now # type: ignore
+        ) 
 
-    def id(self):
+    def id(self) -> str:
         return self._id
 
-    def chat_id(self):
+    def chat_id(self) -> str:
         return self._chat_id
 
-    def username(self):
+    def username(self) -> str:
         return self._username
 
-    def post(self):
+    def post(self) -> str:
         return self._post
 
-    def timestamp(self):
+    def timestamp(self) -> int:
         return self._timestamp
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{timestamp_to_readable_datetime(self._timestamp)} {self._username}: {self._post}"
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self._id,
             "chat_id": self._chat_id,

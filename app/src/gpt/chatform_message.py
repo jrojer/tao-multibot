@@ -27,11 +27,11 @@ USAGE = "usage"
 USER = "user"
 
 
-def _is_latin(char):
+def _is_latin(char: str):
     return unicodedata.name(char).startswith(("LATIN", "COMMON"))
 
 
-def _safe_format_username(username: str):
+def _safe_format_username(username: Optional[str]):
     if username is None:
         return None
     # make username match ^[a-zA-Z0-9_-]{1,64}$
@@ -50,8 +50,8 @@ class ChatformMessage:
     class Usage:
         class Builder:
             def __init__(self) -> None:
-                self._completion_tokens = None
-                self._prompt_tokens = None
+                self._completion_tokens: Optional[int] = None
+                self._prompt_tokens: Optional[int] = None
 
             def completion_tokens(self, value: int) -> "ChatformMessage.Usage.Builder":
                 self._completion_tokens = value
@@ -64,12 +64,12 @@ class ChatformMessage:
             def build(self) -> "ChatformMessage.Usage":
                 return ChatformMessage.Usage(self)
 
-        def __init__(self, builder) -> None:
+        def __init__(self, builder: Builder):
             self._completion_tokens = check_required(
-                builder._completion_tokens, COMPLETION_TOKENS, int
+                builder._completion_tokens, COMPLETION_TOKENS, int # type: ignore
             )
             self._prompt_tokens = check_required(
-                builder._prompt_tokens, PROMPT_TOKENS, int
+                builder._prompt_tokens, PROMPT_TOKENS, int # type: ignore
             )
 
         def completion_tokens(self) -> int:
@@ -98,8 +98,8 @@ class ChatformMessage:
                 return ChatformMessage.FunctionCall(self)
 
         def __init__(self, builder: Builder):
-            self._name = check_required(builder._name, FUNCTION_NAME, str)
-            self._arguments = check_required(builder._arguments, ARGUMENTS, str)
+            self._name = check_required(builder._name, FUNCTION_NAME, str) # type: ignore
+            self._arguments = check_required(builder._arguments, ARGUMENTS, str) # type: ignore
 
         def name(self) -> str:
             return self._name
@@ -115,29 +115,29 @@ class ChatformMessage:
 
     class Builder:
         def __init__(self):
-            self._role = None
-            self._content = None
-            self._name = None
-            self._function_call = None
-            self._usage = None
+            self._role: Optional[str] = None
+            self._content: Optional[str] = None
+            self._name: Optional[str] = None
+            self._function_call: Optional["ChatformMessage.FunctionCall"] = None
+            self._usage: Optional["ChatformMessage.Usage"] = None
 
-        def role(self, role: str):
+        def role(self, role: str) -> "ChatformMessage.Builder":
             self._role = role
             return self
 
-        def content(self, content: str):
+        def content(self, content: str) -> "ChatformMessage.Builder":
             self._content = content
             return self
 
-        def name(self, name: str):
+        def name(self, name: Optional[str]) -> "ChatformMessage.Builder":
             self._name = name
             return self
 
-        def function_call(self, function_call: "ChatformMessage.FunctionCall"):
+        def function_call(self, function_call: "ChatformMessage.FunctionCall") -> "ChatformMessage.Builder":
             self._function_call = function_call
             return self
 
-        def usage(self, usage: "ChatformMessage.Usage") -> None:
+        def usage(self, usage: "ChatformMessage.Usage") -> "ChatformMessage.Builder":
             self._usage = usage
             return self
 
@@ -146,24 +146,24 @@ class ChatformMessage:
 
     def __init__(self, builder: Builder):
         self._role = check_one_of(
-            check_required(builder._role, ROLE, str),
+            check_required(builder._role, ROLE, str), # type: ignore
             ROLE,
             [SYSTEM, USER, ASSISTANT, FUNCTION],
         )
-        self._content = check_required(builder._content, CONTENT, str)
-        self._name = _safe_format_username(check_type(builder._name, NAME, str))
+        self._content = check_required(builder._content, CONTENT, str) # type: ignore
+        self._name = _safe_format_username(check_type(builder._name, NAME, str)) # type: ignore
         self._function_call = check_type(
-            builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall
+            builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall # type: ignore
         )
         check_any_present(
             [self._content, self._function_call], [CONTENT, FUNCTION_CALL]
         )
-        self._usage = check_type(builder._usage, USAGE, ChatformMessage.Usage)
+        self._usage = check_type(builder._usage, USAGE, ChatformMessage.Usage) # type: ignore
 
     def role(self) -> str:
         return self._role
 
-    def content(self) -> Optional[str]:
+    def content(self) -> str:
         return self._content
 
     def name(self) -> Optional[str]:
@@ -187,7 +187,7 @@ class ChatformMessage:
         return d
 
     @staticmethod
-    def from_result_object(result: dict):
+    def from_result_object(result: dict[str, Any]) -> "ChatformMessage":
         d = result[CHOICES][0][MESSAGE]
         builder = (
             ChatformMessage.Builder()
@@ -212,11 +212,11 @@ class ChatformMessage:
         return builder.build()
 
     def token_size(self, tokeniser: Tokeniser) -> int:
-        def size_d(d: dict[str, Any]) -> int:
+        def size_d(d: dict[Any, Any]) -> int:
             size = 0
             for _, v in d.items():
                 if isinstance(v, dict):
-                    size += size_d(v)
+                    size += size_d(v) # type: ignore
                 else:
                     size += tokeniser.num_tokens(str(v))
             return size

@@ -5,8 +5,8 @@ from app.src.server.api.api_client import ApiClient
 
 def get_update_access_handler(client: ApiClient):
     def handler(update: TaoBotUpdate) -> str:
-        enabled_for = []
-        disabled_for = []
+        enabled_for: list[str] = []
+        disabled_for: list[str] = []
         for username in re.findall(r'\+(\w+)', update.post()):
             client.enable_for_username(username)
             enabled_for.append(username)

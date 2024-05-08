@@ -1,5 +1,6 @@
+import multiprocessing
+from multiprocessing import synchronize
 from app.src.butter.checks import check_required
-from threading import Thread
 from app.src.server.api.internal_api_client import InternalApiClient
 from app.src.server.master_config.bot_conf import BotConf
 from app.src.server.master_config.tg_bot_conf import TgBotConf
@@ -11,7 +12,7 @@ from app.src.server.master_config.master_config import MasterConfig
 class RuntimeManager:
     def __init__(self, master_config: MasterConfig):
         self._master_config = check_required(master_config, "main_config", MasterConfig)
-        self._state = {}
+        self._state: dict[str, tuple[multiprocessing.Process, synchronize.Event]] = {}
 
     def start_all(self):
         for bot_conf in self._master_config.bots():
@@ -24,10 +25,12 @@ class RuntimeManager:
     def start(self, bot_conf: BotConf):
         if isinstance(bot_conf, TgBotConf):
             bot = TgBotTarget(bot_conf, InternalApiClient(bot_conf.bot_id(), self._master_config))
-            thread_name = f"{bot_conf.bot_id()}_thread"
-            thread = Thread(target=bot.start, name=thread_name, daemon=True)
-            thread.start()
-            self._state[bot_conf.bot_id()] = (thread, bot)
+            stop_event: synchronize.Event = multiprocessing.Event()
+            this_pid: int = check_required(multiprocessing.current_process().pid, "pid", int)
+            # process = multiprocessing.Process(target=bot.run, args=(stop_event, this_pid))
+            # process.start()
+            # self._state[bot_conf.bot_id()] = (process, stop_event)
+            bot.run(stop_event, this_pid, is_subprocess=False)
         else:
             raise NotImplementedError(
                 f"Bot type {bot_conf.__class__.__name__} is not supported"
@@ -35,7 +38,7 @@ class RuntimeManager:
         
     def stop(self, bot_id: str):
         if bot_id in self._state:
-            thread, bot = self._state[bot_id]
-            bot.stop()
-            thread.join()
+            process, stop_event = self._state[bot_id]
+            stop_event.set()
+            process.join()
             del self._state[bot_id]

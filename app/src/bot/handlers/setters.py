@@ -8,12 +8,12 @@ from app.src.server.api.api_client import ApiClient
 logger = Logger(__name__)
 
 
-def extract_int(string):
+def extract_int(string: str) -> int:
     match = re.search(r"\d+", string)
     if match:
         return int(match.group(0))
     else:
-        return None
+        raise ValueError("No integer found")
 
 
 def get_set_number_of_messages_for_completion_handler(client: ApiClient):

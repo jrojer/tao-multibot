@@ -1,4 +1,7 @@
 import asyncio
+from multiprocessing import synchronize
+import os
+import threading
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
     ChatMessagesRepository,
 )
@@ -15,8 +18,12 @@ from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.gpt.openai_gpt_completer import OpenaiGptCompleter
 from app.src.heads.tg_bot.v1.tg_application import TgApplication
+from app.src.observability.logger import Logger
 from app.src.server.api.api_client import ApiClient
 from app.src.server.master_config.tg_bot_conf import TgBotConf
+
+
+logger = Logger(__name__)
 
 
 class TgBotTarget:
@@ -27,7 +34,7 @@ class TgBotTarget:
         )
         self._should_stop: bool = False
 
-    def start(self):
+    def run(self, stop_event: synchronize.Event, parent_id: int, is_subprocess:bool=False):
         gpt_conf: GptConf = self._bot_conf.openai_conf()
         tao_bot_conf: TaoBotConf = self._bot_conf.tao_bot_conf()
 
@@ -44,14 +51,13 @@ class TgBotTarget:
         if not in_test_mode():
 
             async def wait_for_stop():
-                while not self._should_stop:
+                while not stop_event.is_set() and (not is_subprocess or os.getppid() == parent_id):
                     await asyncio.sleep(1)
-                # This will stop asyncio loop of this thread
+                # NOTE: This is effectively `asyncio.get_running_loop().stop()`
                 application.stop()
 
-            loop = asyncio.new_event_loop()
+            loop = asyncio.get_event_loop()
             asyncio.ensure_future(wait_for_stop(), loop=loop)
+            threading.current_thread().name = f"{self._bot_conf.bot_id()}_thread"
+            logger.info(f"Starting bot {self._bot_conf.bot_id()}")
             application.start()
-
-    def stop(self):
-        self._should_stop = True
