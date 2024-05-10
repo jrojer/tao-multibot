@@ -11,6 +11,6 @@ class ChatMessagesRepository(ABC):
 
     @abstractmethod
     def fetch_last_messages_by_chat_id(
-        self, chat_id: str, limit: int = 1000
+        self, chat: str, limit: int = 1000
     ) -> List[ChatMessage]:
         pass

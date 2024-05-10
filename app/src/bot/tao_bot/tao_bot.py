@@ -39,9 +39,9 @@ def _should_reply(update: TaoBotUpdate):
 def _a_chat_messasge_from(update: TaoBotUpdate) -> ChatMessage:
     message = (
         ChatMessage.new()
-        .chat_id(update.chat_id())
-        .username(update.from_user())
-        .post(update.post())
+        .chat(update.chat_id())
+        .user(update.from_user())
+        .content(update.post())
         .timestamp(update.timestamp())
         .build()
     )
@@ -89,10 +89,10 @@ class TaoBot:
             chat_id, self._conf.number_of_messages_per_completion()
         )
         for m in reversed(messages):
-            if m.username() == self.bot_username():
-                chatform.add_message(assistant_message(m.post()))
+            if m.user() == self.bot_username():
+                chatform.add_message(assistant_message(m.content()))
             else:
-                chatform.add_message(user_message(m.post(), m.username()))
+                chatform.add_message(user_message(m.content(), m.user()))
         return chatform
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
@@ -126,9 +126,9 @@ class TaoBot:
 
             bot_message = (
                 ChatMessage.new()
-                .chat_id(update.chat_id())
-                .username(self.bot_username())
-                .post(reply_text.content())
+                .chat(update.chat_id())
+                .user(self.bot_username())
+                .content(reply_text.content())
                 .build()
             )
 

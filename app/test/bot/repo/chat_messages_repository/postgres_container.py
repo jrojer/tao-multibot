@@ -24,7 +24,7 @@ def setup_postgres_container():
     ).exec()
 
     # Wait for the container to be ready
-    sleep(10)  # 10 seconds
+    sleep(10.0)  # 10 seconds
 
     _create_database("chat_messages")
 
