@@ -87,6 +87,7 @@ async def safe_reply_markdown(update: Update, post: str) -> None:
         await message.reply_markdown(post)
     except BadRequest:
         # TODO: find out why bot generated post is not accepted. This leads to ugly messages sometimes.
+        logger.warning("Failed to reply markdown, trying plain text.\n'''%s\n'''", post)
         await message.reply_text(post)
 
 

@@ -35,7 +35,6 @@ LOG_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "log")
 TMP_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "tmp")
 MAIN_CONFIG_DIR = create_if_not_exists(Path(RUNTIME_DATA_DIR) / "config")
 
-LOG_PATH = LOG_DIR / "app.log"
 MAIN_CONFIG = MAIN_CONFIG_DIR / "master.json"
 
 

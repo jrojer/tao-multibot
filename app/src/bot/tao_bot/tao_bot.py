@@ -55,7 +55,7 @@ class TaoBot:
         gateway: GptGateway,
         config: TaoBotConf,
     ) -> None:
-        self._messages_repo = check_required(
+        self._messages_repo: ChatMessagesRepository = check_required(
             messages_repo, "messages_repo", ChatMessagesRepository
         )
         self._gateway: GptGateway = check_required(gateway, "gpt_gateway", GptGateway)
@@ -89,7 +89,7 @@ class TaoBot:
             chat_id, self._conf.number_of_messages_per_completion()
         )
         for m in reversed(messages):
-            if m.username == self.bot_username():
+            if m.username() == self.bot_username():
                 chatform.add_message(assistant_message(m.post()))
             else:
                 chatform.add_message(user_message(m.post(), m.username()))

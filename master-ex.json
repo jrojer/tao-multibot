@@ -1,42 +1,31 @@
 {
-    "botik": {
-        "type": "tg_bot",
-        "tg_bot": {
-            "username": "botik_bot",
-            "chats": [
-                "1234567890"
-            ],
+    "tao_dev": {
+        "tao_bot": {
+            "username": "tao_dev_bot",
+            "chats": [],
             "admins": [
-                "admin_user"
+                "admin"
             ],
             "users": [],
-            "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+            "bot_mention_names": [
+                "tao",
+                "тао"
+            ],
+            "control_chat_id": "-1001670999999",
+            "messages_per_completion": 25,
+            "system_prompt": "This is a test"
         },
-        "openai": {
-            "token": "sk-1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
-            "model": "gpt-3.5-turbo",
-            "temperature": 0.5,
-            "max_tokens": 100
-        }
-    },
-    "obormotic": {
-        "type": "tg_bot",
         "tg_bot": {
-            "username": "tao_obormotic_bot",
-            "chats": [
-                "1234567890"
-            ],
-            "admins": [
-                "admin_user"
-            ],
-            "users": [],
-            "token": "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+            "token": "999999999:AAHsdX6N1I4_Q-x9Q9Q9Q9Q9Q9Q9Q9Q9Q9Q"
         },
         "openai": {
-            "token": "sk-1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+            "token": "sk-XXXXXXXXXXXXXXXX",
             "model": "gpt-3.5-turbo",
             "temperature": 0.5,
-            "max_tokens": 100
+            "max_tokens": 100,
+            "top_p": 1,
+            "frequency_penalty": 0,
+            "presence_penalty": 0
         }
     }
 }
