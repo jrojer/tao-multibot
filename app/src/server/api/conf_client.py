@@ -1,8 +1,13 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
-class ApiClient(ABC):
+class ConfClient(ABC):
     @abstractmethod
-    def enable_in_group(self, chat_id: str):
+    def get_bot_conf(self) -> dict[str, Any]:
+        pass
+
+    @abstractmethod
+    def enable_for_group(self, chat_id: str):
         pass
 
     @abstractmethod

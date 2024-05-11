@@ -3,7 +3,7 @@ import re
 from app.src.bot.tao_bot.tao_bot_update import TaoBotUpdate
 from app.src.bot.tao_bot.ui_text import CONFIG
 from app.src.observability.logger import Logger
-from app.src.server.api.api_client import ApiClient
+from app.src.server.api.conf_client import ConfClient
 
 logger = Logger(__name__)
 
@@ -16,7 +16,7 @@ def extract_int(string: str) -> int:
         raise ValueError("No integer found")
 
 
-def get_set_number_of_messages_for_completion_handler(client: ApiClient):
+def get_set_number_of_messages_for_completion_handler(client: ConfClient):
     def handler(update: TaoBotUpdate) -> str:
         try:
             value = extract_int(update.post())

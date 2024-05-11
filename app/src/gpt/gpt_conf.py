@@ -26,6 +26,7 @@ class GptConf(ABC):
     def frequency_penalty(self) -> float:
         pass
 
+    # TODO: decide should we provide tokens in conf for GPT and telegram
     @abstractmethod
     def token(self) -> str:
         pass

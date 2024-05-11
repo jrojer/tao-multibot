@@ -19,50 +19,60 @@ from app.src.gpt.gpt_gateway import GptGateway
 from app.src.gpt.openai_gpt_completer import OpenaiGptCompleter
 from app.src.heads.tg_bot.v1.tg_application import TgApplication
 from app.src.observability.logger import Logger, reconfigure_logging
-from app.src.server.api.api_client import ApiClient
-from app.src.server.master_config.tg_bot_conf import TgBotConf
+from app.src.server.api.conf_client import ConfClient
+from app.src.server.master_config.openai_conf_client import GptConfClient
+from app.src.server.master_config.tao_bot_conf_client import TaoBotConfClient
 
 
 logger = Logger(__name__)
 
 
 class TgBotTarget:
-    def __init__(self, bot_conf: TgBotConf, api_client: ApiClient):
-        # TODO: should implement configs with client as a dependency
-        # TODO: should not use bot_conf as we are in another process
-        self._bot_conf: TgBotConf = check_required(bot_conf, "bot_conf", TgBotConf)
-        self._api_client: ApiClient = check_required(
-            api_client, "api_client", ApiClient
+    def __init__(self, conf_client: ConfClient, telegram_token: str, bot_id: str):
+        self._conf_client: ConfClient = check_required(
+            conf_client, "conf_client", ConfClient
         )
+        self._telegram_token = check_required(telegram_token, "telegram_token", str)
+        self._bot_id = check_required(bot_id, "bot_id", str)
         self._should_stop: bool = False
 
-    def run(self, stop_event: synchronize.Event, parent_id: int, is_subprocess:bool=False):
-        gpt_conf: GptConf = self._bot_conf.openai_conf()
-        tao_bot_conf: TaoBotConf = self._bot_conf.tao_bot_conf()
+    def run(
+        self, stop_event: synchronize.Event, parent_id: int, is_subprocess: bool = False
+    ):
+        gpt_conf: GptConf = GptConfClient(self._conf_client, self._bot_id)
+        tao_bot_conf: TaoBotConf = TaoBotConfClient(self._conf_client, self._bot_id)
 
         # TODO: replace with PostgresMessagesRepository
         repo: ChatMessagesRepository = InMemoryMessagesRepository()
-        tg_token: str = self._bot_conf.token()
         gpt_completer: GptCompleter = OpenaiGptCompleter(gpt_conf)
         gpt_gateway: GptGateway = GptGateway(gpt_completer)
         tao_bot: TaoBot = TaoBot(repo, gpt_gateway, tao_bot_conf)
         bot_commands: TaoBotCommands = TaoBotCommands(
-            self._api_client, tao_bot_conf, gpt_conf
+            self._conf_client, tao_bot_conf, gpt_conf
         )
-        application = TgApplication(tao_bot, bot_commands, tg_token, gpt_conf.token())
+        application = TgApplication(
+            tao_bot, bot_commands, self._telegram_token, gpt_conf.token()
+        )
 
         if not in_test_mode():
             this_pid: int = os.getpid()
+
             async def wait_for_stop():
-                while not stop_event.is_set() and (not is_subprocess or this_pid != parent_id):
+                while not stop_event.is_set() and (
+                    not is_subprocess or this_pid != parent_id
+                ):
                     await asyncio.sleep(1)
-                logger.info(f"Stopping bot {self._bot_conf.bot_id()}, pid {this_pid} of parent {parent_id}")
+                logger.info(
+                    f"Stopping bot {self._bot_id}, pid {this_pid} of parent {parent_id}"
+                )
                 # NOTE: This is effectively `asyncio.get_running_loop().stop()`
                 application.stop()
 
             loop = asyncio.get_event_loop()
             asyncio.ensure_future(wait_for_stop(), loop=loop)
-            threading.current_thread().name = self._bot_conf.bot_id()
+            threading.current_thread().name = self._bot_id
             reconfigure_logging()
-            logger.info(f"Starting bot {self._bot_conf.bot_id()}, pid {this_pid} of parent {parent_id}")
+            logger.info(
+                f"Starting bot {self._bot_id}, pid {this_pid} of parent {parent_id}"
+            )
             application.start()

@@ -1,6 +1,10 @@
 from app.src.bot.handlers.start_handler import get_start_handler
 from app.src.bot.handlers.update_access_handler import get_update_access_handler
-from app.src.bot.tao_bot.tao_bot_commands_response import TaoBotCommandsResponse, ignore, reply
+from app.src.bot.tao_bot.tao_bot_commands_response import (
+    TaoBotCommandsResponse,
+    ignore,
+    reply,
+)
 from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
 from app.src.butter.checks import check_required
 from app.src.gpt.gpt_conf import GptConf
@@ -22,7 +26,7 @@ from app.src.bot.tao_bot.ui_text import (
     START,
     UPDATE_ACCESS,
 )
-from app.src.server.api.api_client import ApiClient
+from app.src.server.api.conf_client import ConfClient
 
 logger = Logger(__name__)
 
@@ -38,10 +42,12 @@ def extract_cmd(post: str) -> str:
 
 class TaoBotCommands:
     def __init__(
-        self, client: ApiClient, tao_bot_conf: TaoBotConf, gpt_conf: GptConf
+        self, client: ConfClient, tao_bot_conf: TaoBotConf, gpt_conf: GptConf
     ) -> None:
-        self._client: ApiClient = check_required(client, "client", ApiClient)
-        self._tao_bot_conf: TaoBotConf = check_required(tao_bot_conf, "tao_bot_conf", TaoBotConf)
+        self._client: ConfClient = check_required(client, "client", ConfClient)
+        self._tao_bot_conf: TaoBotConf = check_required(
+            tao_bot_conf, "tao_bot_conf", TaoBotConf
+        )
         self._gpt_conf: GptConf = check_required(gpt_conf, "gpt_conf", GptConf)
 
     def _commands(self):

@@ -1,18 +1,17 @@
 import multiprocessing
 from multiprocessing import synchronize
 import os
-from typing import Optional
+from typing import Any, Optional
 from app.src.butter.checks import check_required
-from app.src.server.api.internal_api_client import InternalApiClient
-from app.src.server.master_config.bot_conf import BotConf
-from app.src.server.master_config.tg_bot_conf import TgBotConf
+from app.src.server.api.http_conf_client import HttpConfClient
 from app.src.server.targets.tg_bot_target import TgBotTarget
 from app.src import env
 from app.src.server.master_config.master_config import MasterConfig
 
 
 class RuntimeManager:
-    def __init__(self, master_config: MasterConfig):
+    def __init__(self, server_port: int, master_config: MasterConfig):
+        self._server_port = server_port
         self._master_config = check_required(master_config, "main_config", MasterConfig)
         self._state: dict[str, tuple[multiprocessing.Process, synchronize.Event]] = {}
 
@@ -24,10 +23,10 @@ class RuntimeManager:
         for bot_conf in self._master_config.bots():
             self.stop(bot_conf.bot_id())
 
-    def start(self, bot_conf: BotConf):
-        if isinstance(bot_conf, TgBotConf):
-            # TODO: should depend only on client
-            bot = TgBotTarget(bot_conf, InternalApiClient(bot_conf.bot_id(), self._master_config))
+    def start(self, bot_conf: dict[str, Any]):
+        bot_id: str = bot_conf["bot_id"]
+        if bot_conf["type"] == "tg_bot":
+            bot = TgBotTarget(HttpConfClient(self._server_port, bot_id), bot_conf["token"], bot_id)
             stop_event: synchronize.Event = multiprocessing.Event()
             this_pid: int = os.getpid()
             if env.DEBUG:
@@ -35,10 +34,10 @@ class RuntimeManager:
             else:
                 process = multiprocessing.Process(target=bot.run, args=(stop_event, this_pid, True))
                 process.start()
-                self._state[bot_conf.bot_id()] = (process, stop_event)
+                self._state[bot_id] = (process, stop_event)
         else:
             raise NotImplementedError(
-                f"Bot type {bot_conf.__class__.__name__} is not supported"
+                f"Bot type {bot_conf["type"]} is not supported"
             )
         
     def stop(self, bot_id: Optional[str]):

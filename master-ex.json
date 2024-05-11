@@ -1,5 +1,7 @@
 {
     "tao_dev": {
+        "type": "tg_bot",
+        "token": "999999999:AAHsdX6N1I4_Q-x9Q9Q9Q9Q9Q9Q9Q9Q9Q9Q",
         "tao_bot": {
             "username": "tao_dev_bot",
             "chats": [],
@@ -15,10 +17,8 @@
             "messages_per_completion": 25,
             "system_prompt": "This is a test"
         },
-        "tg_bot": {
-            "token": "999999999:AAHsdX6N1I4_Q-x9Q9Q9Q9Q9Q9Q9Q9Q9Q9Q"
-        },
-        "openai": {
+        "gpt": {
+            "type": "openai",
             "token": "sk-XXXXXXXXXXXXXXXX",
             "model": "gpt-3.5-turbo",
             "temperature": 0.5,
