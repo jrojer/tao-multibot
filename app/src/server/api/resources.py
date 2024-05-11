@@ -12,6 +12,7 @@ logger = Logger(__name__)
 Handler = Callable[[web.Request], Coroutine[Any, Any, web.Response]]
 
 
+# TODO: add get method to return fresh json object for given bot_id
 class Resources:
     def __init__(self, runtime_manager: RuntimeManager):
         self._app: web.Application = web.Application()

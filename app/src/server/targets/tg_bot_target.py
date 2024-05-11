@@ -28,6 +28,8 @@ logger = Logger(__name__)
 
 class TgBotTarget:
     def __init__(self, bot_conf: TgBotConf, api_client: ApiClient):
+        # TODO: should implement configs with client as a dependency
+        # TODO: should not use bot_conf as we are in another process
         self._bot_conf: TgBotConf = check_required(bot_conf, "bot_conf", TgBotConf)
         self._api_client: ApiClient = check_required(
             api_client, "api_client", ApiClient
@@ -38,6 +40,7 @@ class TgBotTarget:
         gpt_conf: GptConf = self._bot_conf.openai_conf()
         tao_bot_conf: TaoBotConf = self._bot_conf.tao_bot_conf()
 
+        # TODO: replace with PostgresMessagesRepository
         repo: ChatMessagesRepository = InMemoryMessagesRepository()
         tg_token: str = self._bot_conf.token()
         gpt_completer: GptCompleter = OpenaiGptCompleter(gpt_conf)

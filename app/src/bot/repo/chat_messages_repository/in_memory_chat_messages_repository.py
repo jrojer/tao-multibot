@@ -12,11 +12,11 @@ class InMemoryMessagesRepository(ChatMessagesRepository):
         self._messages[id] = message
         return id
 
-    def fetch_last_messages_by_chat_id(
-        self, chat: str, limit: int = 1000
+    def fetch_last_messages_by_chat_and_adder(
+        self, chat: str, adder: str, limit: int = 1000
     ) -> List[ChatMessage]:
         return [
             m 
             for m in self._messages.values() 
-            if m.chat() == chat
+            if m.chat() == chat and m.added_by() == adder
         ][-limit:]

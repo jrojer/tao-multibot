@@ -6,6 +6,9 @@ from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
     ChatMessagesRepository,
 )
+from app.src.bot.repo.chat_messages_repository.content_type import ContentType
+from app.src.bot.repo.chat_messages_repository.role import Role
+from app.src.bot.repo.chat_messages_repository.source import Source
 from app.src.butter.checks import check_required
 from app.src.third_party.flyway.postgres_migrator import PostgresMigrator
 
@@ -43,7 +46,7 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     def add(self, message: ChatMessage) -> str:
         cursor = self._conn.cursor()
         sql = f"""
-            INSERT INTO chat_messages ("id", "timestamp", "content", "content_type", "user", "chat", "messenger", "role", "added_by")
+            INSERT INTO chat_messages ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by")
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ;
         """
@@ -58,18 +61,18 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
         self._conn.commit()
         return new_id
 
-    def fetch_last_messages_by_chat_id(
-        self, chat: str, limit: int = 1000
+    def fetch_last_messages_by_chat_and_adder(
+        self, chat: str, adder: str, limit: int = 1000
     ) -> List[ChatMessage]:
         cursor = self._conn.cursor()
         sql = f"""
-            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "messenger", "role", "added_by"
+            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by"
             FROM chat_messages
-            WHERE "chat" = %s
+            WHERE "chat" = %s and "added_by" = %s
             ORDER BY "timestamp"
             LIMIT %s;
         """
-        cursor.execute(sql, (chat, limit))
+        cursor.execute(sql, (chat, adder, limit))
         records = cursor.fetchall()
         return [_from_record(r) for r in records]
 
@@ -80,11 +83,11 @@ def _from_record(r: tuple[Any, ...]) -> ChatMessage:
         .id(r[0])
         .timestamp(r[1])
         .content(r[2])
-        .content_type(r[3])
+        .content_type(ContentType.from_str(r[3]))
         .user(r[4])
         .chat(r[5])
-        .source(r[6])
-        .role(r[7])
+        .source(Source.from_str(r[6]))
+        .role(Role.from_str(r[7]))
         .added_by(r[8])
         .build()
     )

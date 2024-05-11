@@ -2,7 +2,7 @@ from app.src.butter.checks import check_required
 from app.src.server.api.api_client import ApiClient
 from app.src.server.master_config.master_config import MasterConfig
 
-
+# TODO: client should be only remote
 class InternalApiClient(ApiClient):
     def __init__(self, bot_id: str, master_config: MasterConfig):
         self._modifier = master_config.modifier()

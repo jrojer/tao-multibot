@@ -1,4 +1,7 @@
 from typing import Any
+from app.src.bot.repo.chat_messages_repository.content_type import ContentType
+from app.src.bot.repo.chat_messages_repository.role import Role
+from app.src.bot.repo.chat_messages_repository.source import Source
 from app.src.butter.checks import check_required, check_type
 from app.src.butter.clock import timestamp_now, timestamp_to_readable_datetime
 from app.src.butter.functional import or_else
@@ -31,8 +34,8 @@ class ChatMessage:
             self._content = content
             return self
 
-        def content_type(self, content_type: str) -> "ChatMessage.Builder":
-            self._content_type = content_type
+        def content_type(self, content_type: ContentType) -> "ChatMessage.Builder":
+            self._content_type = content_type.value
             return self
 
         def user(self, user: str) -> "ChatMessage.Builder":
@@ -43,12 +46,12 @@ class ChatMessage:
             self._chat = chat
             return self
 
-        def source(self, source: str) -> "ChatMessage.Builder":
-            self._source = source
+        def source(self, source: Source) -> "ChatMessage.Builder":
+            self._source = source.value
             return self
 
-        def role(self, role: str) -> "ChatMessage.Builder":
-            self._role = role
+        def role(self, role: Role) -> "ChatMessage.Builder":
+            self._role = role.value
             return self
 
         def added_by(self, added_by: str) -> "ChatMessage.Builder":

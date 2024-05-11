@@ -26,6 +26,7 @@ class RuntimeManager:
 
     def start(self, bot_conf: BotConf):
         if isinstance(bot_conf, TgBotConf):
+            # TODO: should depend only on client
             bot = TgBotTarget(bot_conf, InternalApiClient(bot_conf.bot_id(), self._master_config))
             stop_event: synchronize.Event = multiprocessing.Event()
             this_pid: int = os.getpid()

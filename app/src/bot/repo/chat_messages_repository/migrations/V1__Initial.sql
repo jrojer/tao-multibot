@@ -7,7 +7,7 @@ CREATE TABLE chat_messages (
     "content_type" TEXT NOT NULL,
     "user" TEXT NOT NULL, 
     "chat" TEXT NOT NULL,
-    "messenger" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
     "role" TEXT NOT NULL,
     "added_by" TEXT NOT NULL
 );
