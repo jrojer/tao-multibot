@@ -135,6 +135,9 @@ class TaoBot:
                 [],
             )
 
+            # TODO: send usage metric
+            
+
             bot_message = (
                 ChatMessage.new()
                 .content(reply_text.content())

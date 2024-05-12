@@ -13,10 +13,12 @@ class StopBotResource(Resource):
     def __init__(self, runtime_manager: RuntimeManager):
         self._runtime_manager = check_required(runtime_manager, "runtime_manager", RuntimeManager)
 
-    def path(self) -> str:
+    @staticmethod
+    def path() -> str:
         return "/api/bots/{bot_name}/stop"
     
-    def method(self) -> str:
+    @staticmethod
+    def method() -> str:
         return "POST"
 
     def handler(self) -> Handler:

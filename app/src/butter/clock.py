@@ -1,4 +1,5 @@
 import datetime
+import enum
 
 _mode = [0]
 
@@ -7,10 +8,26 @@ def clock_test_mode(on: bool):
     _mode[0] = on
 
 
-def timestamp_now():
+class Precision(enum.Enum):
+    SECOND = "s"
+    MILLISECOND = "ms"
+    MICROSECOND = "us"
+    NANOSECOND = "ns"
+
+
+_d = {
+    "s": 1,
+    "ms": 1000,
+    "us": 1000000,
+    "ns": 1000000000,
+}
+
+
+def timestamp_now(precision: Precision = Precision.SECOND) -> int:
     if _mode[0]:
         return 123456789
-    return int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    coef = _d[precision.value]
+    return int(datetime.datetime.now(datetime.timezone.utc).timestamp() * coef)
 
 
 def timestamp_to_readable_datetime(

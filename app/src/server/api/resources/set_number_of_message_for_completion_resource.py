@@ -14,10 +14,12 @@ class SetNumberOfMessagesForCompletionResource(Resource):
             modifier, "modifier", MasterConfig.Modifier
         )
 
-    def path(self) -> str:
+    @staticmethod
+    def path() -> str:
         return "/api/bots/{bot_name}/conf/messages_per_completion"
 
-    def method(self) -> str:
+    @staticmethod
+    def method() -> str:
         return "POST"
 
     def handler(self) -> Handler:

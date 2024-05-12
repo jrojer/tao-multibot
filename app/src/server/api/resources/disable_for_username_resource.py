@@ -14,10 +14,12 @@ class DisableForUsernameResource(Resource):
             modifier, "modifier", MasterConfig.Modifier
         )
 
-    def path(self) -> str:
+    @staticmethod
+    def path() -> str:
         return "/api/bots/{bot_name}/users/{user_name}/disable"
 
-    def method(self) -> str:
+    @staticmethod
+    def method() -> str:
         return "POST"
 
     def handler(self) -> Handler:

@@ -6,12 +6,14 @@ from aiohttp import web
 Handler = Callable[[web.Request], Coroutine[Any, Any, web.Response]]
 
 class Resource(ABC):
+    @staticmethod
     @abstractmethod
-    def method(self) -> str:
+    def method() -> str:
         pass
 
+    @staticmethod
     @abstractmethod
-    def path(self) -> str:
+    def path() -> str:
         pass
 
     @abstractmethod

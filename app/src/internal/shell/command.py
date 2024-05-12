@@ -1,3 +1,4 @@
+import asyncio
 import subprocess
 
 from app.src.butter.checks import check_required
@@ -27,6 +28,24 @@ class Command:
         self._stdout = result.stdout
         self._stderr = result.stderr
         self._returncode = result.returncode
+        logger.info(
+            "Command\n%s\nexecuted with return code: %d",
+            " ".join(self._cmd),
+            self._returncode,
+        )
+        return self
+
+    async def aexec(self) -> "Command":
+        logger.info("Executing command: %s", " ".join(self._cmd))
+        proc = await asyncio.create_subprocess_shell(
+            " ".join(self._cmd),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        self._stdout = stdout.decode()
+        self._stderr = stderr.decode()
+        self._returncode = check_required(proc.returncode, "returncode", int)
         logger.info(
             "Command\n%s\nexecuted with return code: %d",
             " ".join(self._cmd),

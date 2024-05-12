@@ -15,16 +15,17 @@ class GetBotConfResource(Resource):
             master_conf, "master_conf", MasterConfig
         )
 
-    def path(self) -> str:
+    @staticmethod
+    def path() -> str:
         return "/api/bots/{bot_name}/conf"
     
-    def method(self) -> str:
+    @staticmethod
+    def method() -> str:
         return "GET"
 
     def handler(self) -> Handler:
         async def handler(request: web.Request) -> web.Response:
             bot_name: str = check_required(request.match_info.get("bot_name"), "bot_name", str)
-            logger.info(f"Stopping bot {bot_name}")
             conf: dict[str, Any] = self._master_conf.bot_conf(bot_name)
             return web.json_response(conf)
 

@@ -22,7 +22,6 @@ from app.src.server.api.resources.set_number_of_message_for_completion_resource 
 from app.src.server.api.resources.stop_bot_resource import StopBotResource
 from app.src.server.master_config.master_config import MasterConfig
 from app.src.server.runtime_manager import RuntimeManager
-import multiprocessing
 
 logger = Logger(__name__)
 
@@ -55,9 +54,7 @@ class Server:
             ]
         )
 
-    def start(self) -> multiprocessing.Process:
-        def target():
-            web.run_app(self._app, port=int(self._port))  # type: ignore
-        process = multiprocessing.Process(target=target)
-        process.start()
-        return process
+    async def start(self):
+        runner = web.AppRunner(self._app)
+        await runner.setup()
+        await web.TCPSite(runner, port=self._port).start()

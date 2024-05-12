@@ -8,6 +8,7 @@ from app.src.server.targets.tg_bot_target import TgBotTarget
 from app.src import env
 from app.src.server.master_config.master_config import MasterConfig
 
+multiprocessing.set_start_method("fork")
 
 class RuntimeManager:
     def __init__(self, server_port: int, master_config: MasterConfig):
