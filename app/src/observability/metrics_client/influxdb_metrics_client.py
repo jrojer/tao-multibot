@@ -1,5 +1,5 @@
 from app.src import env
-from app.src.observability.metrics_client.influx_client import InfluxdbClient
+from app.src.observability.metrics_client.influxdb_client import InfluxdbClient
 
 
 class MetricsReporter:
@@ -12,8 +12,11 @@ class MetricsReporter:
                 bucket=env.INFLUXDB_BUCKET(),
             )
 
-    async def write(
+    def write(
         self, measurement: str, tags: dict[str, str], fields: dict[str, str]
     ):
-        if env.INFLUXDB_ENABLED():
-            await self._client.write(measurement, tags, fields)
+        try:
+            if env.INFLUXDB_ENABLED():
+                self._client.write(measurement, tags, fields)
+        except Exception as e:
+            raise e

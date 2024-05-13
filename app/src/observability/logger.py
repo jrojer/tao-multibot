@@ -5,29 +5,29 @@ from typing import Any
 from app.src import env
 from app.src.observability.influxdb_logger_handler import InfluxDbLoggerHandler
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(Path(env.LOG_DIR()) / (threading.current_thread().name + ".log")),
-        InfluxDbLoggerHandler(),
-    ],
-)
+
+class NoiseRecordsFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord):
+        return not (
+            record.name in ["aiohttp.access", "httpx"] and record.levelname == "INFO"
+        )
 
 
-# NOTE: this is a workaround to reconfigure logging after forking
-# TODO: think about a better way to reconfigure logging
-def reconfigure_logging():
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
+def configure_logging():
+    _fileHandler = logging.FileHandler(
+        Path(env.LOG_DIR()) / (threading.current_thread().name + ".log")
+    )
+    _fileHandler.addFilter(NoiseRecordsFilter())
+
+    _influxDbLoggerHandler = InfluxDbLoggerHandler()
+    _influxDbLoggerHandler.addFilter(NoiseRecordsFilter())
+
     logging.basicConfig(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         level=logging.INFO,
         handlers=[
-            logging.FileHandler(
-                Path(env.LOG_DIR()) / (threading.current_thread().name + ".log")
-            ),
-            InfluxDbLoggerHandler(),
+            _fileHandler,
+            _influxDbLoggerHandler,
         ],
     )
 
@@ -48,3 +48,6 @@ class Logger:
 
     def error(self, msg: str, *args: Any, **kwargs: Any):
         self.logger.error(msg, *args, **kwargs)
+
+
+configure_logging()

@@ -158,7 +158,7 @@ class ChatformMessage:
         check_any_present(
             [self._content, self._function_call], [CONTENT, FUNCTION_CALL]
         )
-        self._usage = check_required(builder._usage, USAGE, ChatformMessage.Usage) # type: ignore
+        self._usage = check_type(builder._usage, USAGE, ChatformMessage.Usage) # type: ignore
 
     def role(self) -> str:
         return self._role
@@ -172,7 +172,7 @@ class ChatformMessage:
     def function_call(self) -> Optional[FunctionCall]:
         return self._function_call
 
-    def usage(self) -> Usage:
+    def usage(self) -> Optional[Usage]:
         return self._usage
 
     def to_dict(self) -> dict[str, Any]:

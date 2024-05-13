@@ -3,7 +3,7 @@ from logging import Handler, getLevelName
 from app.src.observability.metrics_client.influxdb_metrics_client import (
     MetricsReporter,
 )
-
+from app.src import env
 
 class InfluxDbLoggerHandler(Handler):
     """
@@ -14,10 +14,9 @@ class InfluxDbLoggerHandler(Handler):
         Handler.__init__(self)
         self.metrics_client = MetricsReporter()
 
-    def close(self):
-        self.metrics_client.close()
-
     def emit(self, record):
+        if not env.INFLUXDB_ENABLED():
+            return
         msg = self.format(record)
         try:
             self.metrics_client.write(

@@ -1,7 +1,9 @@
 from pathlib import Path
 from typing import Any
+import json
 
-from app.src.butter.checks import check_that
+
+from app.src.butter.checks import check_required, check_that
 
 
 _vars: dict[str, Any] = {}
@@ -36,7 +38,7 @@ def SERVER_PORT() -> int:
 
 
 def DEBUG() -> bool:
-    return _vars["DEBUG"] in ["True", "true"]
+    return check_required(_vars["DEBUG"], "DEBUG", bool)
 
 
 def MASTER_CONFIG_PATH() -> Path:
@@ -51,7 +53,7 @@ def MASTER_CONFIG_PATH() -> Path:
 
 
 def INFLUXDB_ENABLED() -> bool:
-    return _vars["INFLUXDB"]["enabled"] in ["True", "true"]
+    return check_required(_vars["INFLUXDB"]["enabled"], "INFLUXDB_ENABLED", bool)
 
 
 def INFLUXDB_URL() -> str:
@@ -74,7 +76,7 @@ def INFLUXDB_BUCKET() -> str:
 
 
 def POSTGRES_ENABLED() -> bool:
-    return _vars["POSTGRES"]["enabled"] in ["True", "true"]
+    return check_required(_vars["POSTGRES"]["enabled"], "POSTGRES_ENABLED", bool)
 
 
 def POSTGRES_HOST() -> str:
@@ -108,3 +110,16 @@ def assume_test_mode():
 
 def in_test_mode() -> bool:
     return __test_mode[0]
+
+
+def init_env(master_conf_path: str, var_dir_path: str):
+    set_var("MASTER_CONFIG_PATH", master_conf_path)
+    set_var("VAR_DIR", var_dir_path)
+
+    with open(MASTER_CONFIG_PATH()) as f:
+        infra = json.load(f)["infra"]
+
+    set_var("POSTGRES", infra["postgres"])
+    set_var("INFLUXDB", infra["influxdb"])
+    set_var("SERVER_PORT", infra["server"]["port"])
+    set_var("DEBUG", infra["debug"])

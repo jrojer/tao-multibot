@@ -1,4 +1,4 @@
-import asyncio
+import time
 from app.src.observability.logger import Logger
 from app.src.server.api.server import Server
 from app.src.server.master_config.master_config import MasterConfig
@@ -21,13 +21,7 @@ def main():
 
     signal.signal(signal.SIGINT, handler)  # type: ignore
 
-    async def start_server():
-        await resources.start()
-    
-    async def start_bots():
-        runtime_manager.start_all()
-    
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(start_server())
-    loop.run_until_complete(start_bots())
-    loop.run_forever()
+    p = resources.start()
+    time.sleep(5)
+    runtime_manager.start_all()
+    p.join()

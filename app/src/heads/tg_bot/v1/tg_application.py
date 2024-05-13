@@ -92,7 +92,13 @@ async def safe_reply_markdown(update: Update, post: str) -> None:
 
 
 class TgApplication:
-    def __init__(self, bot: TaoBot, bot_commands: TaoBotCommands, tg_token: str, openai_token: str):
+    def __init__(
+        self,
+        bot: TaoBot,
+        bot_commands: TaoBotCommands,
+        tg_token: str,
+        openai_token: str,
+    ):
         self._bot: TaoBot = check_required(bot, "bot", TaoBot)
         self._commands: TaoBotCommands = check_required(
             bot_commands, "bot_commands", TaoBotCommands
@@ -154,7 +160,7 @@ class TgApplication:
                     update.message.voice.file_id
                 )
                 transcription = await TgVoice(
-                    self._tg_bot, AudioTranscriptor(self._openai_token), OggWavConverter()
+                    AudioTranscriptor(self._openai_token), OggWavConverter()
                 ).transcribe(ogg_file)
                 tao_update = self.to_tao_update(update, transcription)
             else:

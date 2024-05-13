@@ -14,10 +14,7 @@
         },
         "influxdb": {
             "enabled": false,
-            "host": "localhost",
-            "port": 8086,
-            "user": "admin",
-            "password": "password",
+            "url": "http://localhost:8086",
             "org": "org",
             "bucket": "bucket",
             "token": "token"

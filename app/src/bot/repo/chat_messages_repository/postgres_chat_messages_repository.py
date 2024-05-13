@@ -15,7 +15,8 @@ from app.src.third_party.flyway.postgres_migrator import PostgresMigrator
 import psycopg2
 
 
-DB_NAME = "chat_messages"
+DB_NAME = "platform"
+TABLE_NAME = "chat_messages"
 
 
 class PostgresChatMessagesRepository(ChatMessagesRepository):
@@ -46,7 +47,7 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     def add(self, message: ChatMessage) -> str:
         cursor = self._conn.cursor()
         sql = f"""
-            INSERT INTO chat_messages ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by")
+            INSERT INTO {TABLE_NAME} ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by")
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ;
         """
@@ -67,7 +68,7 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
         cursor = self._conn.cursor()
         sql = f"""
             SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by"
-            FROM chat_messages
+            FROM {TABLE_NAME}
             WHERE "chat" = %s and "added_by" = %s
             ORDER BY "timestamp"
             LIMIT %s;

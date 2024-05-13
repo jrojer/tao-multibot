@@ -137,19 +137,19 @@ class TaoBot:
                 [],
             )
 
-            await metrics.write(
+            usage: ChatformMessage.Usage = check_required(
+                reply_message.usage(), "usage", ChatformMessage.Usage
+            )
+            metrics.write(
                 measurement="usage",
                 tags={
                     "bot": self.bot_username(),
-                    "chat": update.chat_name(),
+                    # "chat": update.chat_name(),
                     "chat_id": update.chat_id(),
                     "user": update.from_user(),
                 },
                 fields={
-                    "usage": str(
-                        reply_message.usage().completion_tokens()
-                        + reply_message.usage().prompt_tokens()
-                    )
+                    "usage": str(usage.completion_tokens() + usage.prompt_tokens())
                 },
             )
 
@@ -166,7 +166,7 @@ class TaoBot:
             )
 
             # fmt: off
-            logger.info("Replying %s@%s-%s: %s", self.bot_username(), update.chat_name(), update.chat_id(), reply_message)
+            logger.info("Replying %s@%s-%s: %s", self.bot_username(), update.chat_name(), update.chat_id(), reply_message.content())
             # fmt: on
 
             self._messages_repo.add(bot_message)

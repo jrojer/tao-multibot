@@ -8,7 +8,7 @@ from app.src.server.api.conf_client import ConfClient
 logger = Logger(__name__)
 
 
-def extract_int(string: str) -> int:
+def _extract_int(string: str) -> int:
     match = re.search(r"\d+", string)
     if match:
         return int(match.group(0))
@@ -16,13 +16,13 @@ def extract_int(string: str) -> int:
         raise ValueError("No integer found")
 
 
-def get_set_number_of_messages_for_completion_handler(client: ConfClient):
+def get_set_number_of_messages_per_completion_handler(client: ConfClient):
     def handler(update: TaoBotUpdate) -> str:
         try:
-            value = extract_int(update.post())
+            value = _extract_int(update.post())
             client.set_number_of_messages_per_completion(value)
-            logger.info("number_of_messages_for_completion set to %s", value)
-            return f"`number_of_messages_for_completion` set to {value}. /{CONFIG}"
+            logger.info("number_of_messages_per_completion set to %s", value)
+            return f"`number_of_messages_per_completion` set to {value}. /{CONFIG}"
         except ValueError as e:
             return f"Cannot set value. {e}"
 

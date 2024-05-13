@@ -21,7 +21,7 @@ from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.gpt.openai_gpt_completer import OpenaiGptCompleter
 from app.src.heads.tg_bot.v1.tg_application import TgApplication
-from app.src.observability.logger import Logger, reconfigure_logging
+from app.src.observability.logger import Logger, configure_logging
 from app.src.server.api.conf_client import ConfClient
 from app.src.server.master_config.openai_conf_client import GptConfClient
 from app.src.server.master_config.tao_bot_conf_client import TaoBotConfClient
@@ -82,7 +82,7 @@ class TgBotTarget:
             loop = asyncio.get_event_loop()
             asyncio.ensure_future(wait_for_stop(), loop=loop)
             threading.current_thread().name = self._bot_id
-            reconfigure_logging()
+            configure_logging()
             logger.info(
                 f"Starting bot {self._bot_id}, pid {this_pid} of parent {parent_id}"
             )

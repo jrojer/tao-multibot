@@ -8,7 +8,7 @@ from aiohttp import web
 logger = Logger(__name__)
 
 
-class SetNumberOfMessagesForCompletionResource(Resource):
+class SetNumberOfMessagesPerCompletionResource(Resource):
     def __init__(self, modifier: MasterConfig.Modifier):
         self._modifier: MasterConfig.Modifier = check_required(
             modifier, "modifier", MasterConfig.Modifier

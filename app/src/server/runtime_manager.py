@@ -4,8 +4,8 @@ import os
 from typing import Any, Optional
 from app.src.butter.checks import check_required
 from app.src.server.api.http_conf_client import HttpConfClient
+from app.src.server.api.conf_client import ConfClient
 from app.src.server.targets.tg_bot_target import TgBotTarget
-from app.src import env
 from app.src.server.master_config.master_config import MasterConfig
 
 multiprocessing.set_start_method("fork")
@@ -27,15 +27,13 @@ class RuntimeManager:
     def start(self, bot_conf: dict[str, Any]):
         bot_id: str = bot_conf["bot_id"]
         if bot_conf["type"] == "tg_bot":
-            bot = TgBotTarget(HttpConfClient(self._server_port, bot_id), bot_conf["token"], bot_id)
+            conf_client: ConfClient = HttpConfClient(self._server_port, bot_id)
+            bot = TgBotTarget(conf_client, bot_conf["token"], bot_id)
             stop_event: synchronize.Event = multiprocessing.Event()
             this_pid: int = os.getpid()
-            if env.DEBUG():
-                bot.run(stop_event, this_pid, is_subprocess=False)
-            else:
-                process = multiprocessing.Process(target=bot.run, args=(stop_event, this_pid, True))
-                process.start()
-                self._state[bot_id] = (process, stop_event)
+            process = multiprocessing.Process(target=bot.run, args=(stop_event, this_pid, True))
+            process.start()
+            self._state[bot_id] = (process, stop_event)
         else:
             raise NotImplementedError(
                 f"Bot type {bot_conf["type"]} is not supported"

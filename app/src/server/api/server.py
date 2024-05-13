@@ -1,3 +1,4 @@
+import multiprocessing
 from aiohttp import web
 
 from app.src.butter.checks import check_required
@@ -16,8 +17,8 @@ from app.src.server.api.resources.enable_for_group_resource import (
     EnableForGroupResource,
 )
 from app.src.server.api.resources.get_bot_conf_resource import GetBotConfResource
-from app.src.server.api.resources.set_number_of_message_for_completion_resource import (
-    SetNumberOfMessagesForCompletionResource,
+from app.src.server.api.resources.set_number_of_message_per_completion_resource import (
+    SetNumberOfMessagesPerCompletionResource,
 )
 from app.src.server.api.resources.stop_bot_resource import StopBotResource
 from app.src.server.master_config.master_config import MasterConfig
@@ -50,11 +51,23 @@ class Server:
                 route(DisableForGroupResource(modifier)),
                 route(EnableForUsernameResource(modifier)),
                 route(DisableForUsernameResource(modifier)),
-                route(SetNumberOfMessagesForCompletionResource(modifier)),
+                route(SetNumberOfMessagesPerCompletionResource(modifier)),
             ]
         )
 
-    async def start(self):
+    async def _start(self):
         runner = web.AppRunner(self._app)
         await runner.setup()
         await web.TCPSite(runner, port=self._port).start()
+
+    def start(self) -> multiprocessing.Process:
+        def target():
+            import asyncio
+
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self._start())
+            loop.run_forever()
+
+        p = multiprocessing.Process(target=target)
+        p.start()
+        return p
