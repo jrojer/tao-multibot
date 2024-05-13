@@ -1,34 +1,19 @@
-# type: ignore
-import logging
-# TODO: use http API instead of python client
-from influxdb_client import InfluxDBClient, Point
-from influxdb_client.client.write_api import SYNCHRONOUS
 from app.src import env
-
-from app.src.observability.metrics_client.metrics_client import MetricsClient
-
-logger = logging.getLogger(__name__)
-
-token = env.INFLUXDB_TOKEN
-org = "org"
-# TODO change to env variable
-url = "http://influxdb:8086"
-bucket = "bucket"
+from app.src.observability.metrics_client.influx_client import InfluxdbClient
 
 
-class InfluxDbMetricsClient(MetricsClient):
+class MetricsReporter:
     def __init__(self):
-        self.client = InfluxDBClient(url=url, token=token, org=org)
-        self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
+        if env.INFLUXDB_ENABLED():
+            self._client = InfluxdbClient(
+                url=env.INFLUXDB_URL(),
+                token=env.INFLUXDB_TOKEN(),
+                org=env.INFLUXDB_ORG(),
+                bucket=env.INFLUXDB_BUCKET(),
+            )
 
-    def write(self, measurement: str, tags: dict, fields: dict):
-        point = Point(measurement)
-        for tag, value in tags.items():
-            point.tag(tag, value)
-        for field, value in fields.items():
-            point.field(field, value)
-
-        self.write_api.write(bucket, org, point)
-
-    def close(self):
-        self.client.close()
+    async def write(
+        self, measurement: str, tags: dict[str, str], fields: dict[str, str]
+    ):
+        if env.INFLUXDB_ENABLED():
+            await self._client.write(measurement, tags, fields)

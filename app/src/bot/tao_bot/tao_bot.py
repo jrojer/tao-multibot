@@ -19,9 +19,11 @@ from app.src.gpt.chatform_message import (
 )
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.observability.logger import Logger
+from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
 
 
 logger = Logger(__name__)
+metrics = MetricsReporter()
 
 
 def _log_update(update: TaoBotUpdate, text: str, cf_size: int = 0):
@@ -130,17 +132,30 @@ class TaoBot:
         async def reply_action() -> ChatformMessage:
             _log_update(update, "Processing")
 
-            reply_text: ChatformMessage = await self._gateway.forward(
+            reply_message: ChatformMessage = await self._gateway.forward(
                 chatform,
                 [],
             )
 
-            # TODO: send usage metric
-            
+            await metrics.write(
+                measurement="usage",
+                tags={
+                    "bot": self.bot_username(),
+                    "chat": update.chat_name(),
+                    "chat_id": update.chat_id(),
+                    "user": update.from_user(),
+                },
+                fields={
+                    "usage": str(
+                        reply_message.usage().completion_tokens()
+                        + reply_message.usage().prompt_tokens()
+                    )
+                },
+            )
 
             bot_message = (
                 ChatMessage.new()
-                .content(reply_text.content())
+                .content(reply_message.content())
                 .content_type(ContentType.TEXT)
                 .user(self.bot_username())
                 .chat(update.chat_id())
@@ -151,10 +166,10 @@ class TaoBot:
             )
 
             # fmt: off
-            logger.info("Replying %s@%s-%s: %s", self.bot_username(), update.chat_name(), update.chat_id(), reply_text)
+            logger.info("Replying %s@%s-%s: %s", self.bot_username(), update.chat_name(), update.chat_id(), reply_message)
             # fmt: on
 
             self._messages_repo.add(bot_message)
-            return reply_text
+            return reply_message
 
         return reply(reply_action, postreply_action)

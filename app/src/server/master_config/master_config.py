@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Any
-from app.src.butter.checks import check_required
+from app.src.butter.checks import check_required, check_that
 
 
 class MasterConfig:
@@ -15,37 +15,41 @@ class MasterConfig:
             self._path_to_master_conf: str = check_required(
                 path_to_master_conf, "path_to_master_conf", Path
             )
+            check_that(path_to_master_conf.exists(), f"master conf {path_to_master_conf} not found")
 
         def _save(self):
             with open(self._path_to_master_conf, "w") as f:
                 json.dump(self._d, f, indent=4, ensure_ascii=False)
 
+        def _tbc(self, bot_id: str) -> dict[str, Any]:
+            return self._d["bots"][bot_id]["tao_bot"]
+
         def enable_in_group(self, bot_id: str, chat_id: str):
-            a_set = set(self._d[bot_id]["tao_bot"]["chats"])
+            a_set = set(self._tbc(bot_id)["chats"])
             a_set.add(chat_id)
-            self._d[bot_id]["tao_bot"]["chats"] = list(a_set)
+            self._tbc(bot_id)["chats"] = list(a_set)
             self._save()
 
         def disable_for_group(self, bot_id: str, chat_id: str):
-            a_set = set(self._d[bot_id]["tao_bot"]["chats"])
+            a_set = set(self._tbc(bot_id)["chats"])
             a_set.remove(chat_id)
-            self._d[bot_id]["tao_bot"]["chats"] = list(a_set)
+            self._tbc(bot_id)["chats"] = list(a_set)
             self._save()
 
         def enable_for_username(self, bot_id: str, username: str):
-            a_set = set(self._d[bot_id]["tao_bot"]["users"])
+            a_set = set(self._tbc(bot_id)["users"])
             a_set.add(username)
-            self._d[bot_id]["tao_bot"]["users"] = list(a_set)
+            self._tbc(bot_id)["users"] = list(a_set)
             self._save()
 
         def disable_for_username(self, bot_id: str, username: str):
-            a_set = set(self._d[bot_id]["tao_bot"]["users"])
+            a_set = set(self._tbc(bot_id)["users"])
             a_set.remove(username)
-            self._d[bot_id]["tao_bot"]["users"] = list(a_set)
+            self._tbc(bot_id)["users"] = list(a_set)
             self._save()
 
         def set_number_of_messages_per_completion(self, bot_id: str, value: int):
-            self._d[bot_id]["tao_bot"]["messages_per_completion"] = value
+            self._tbc(bot_id)["messages_per_completion"] = value
             self._save()
 
     def __init__(self, path_to_master_conf: Path):
@@ -56,12 +60,13 @@ class MasterConfig:
             self._d: dict[str, Any] = check_required(json.load(f), "config", dict)
 
     def bot_conf(self, bot_id: str) -> dict[str, Any]:
-        tc = self._d[bot_id]["tao_bot"]
-        gc = self._d[bot_id]["gpt"]
+        bots = self._d["bots"]
+        tc = bots[bot_id]["tao_bot"]
+        gc = bots[bot_id]["gpt"]
         return {
-            "bot_id": bot_id,
-            "type": self._d[bot_id]["type"],
-            "token": self._d[bot_id]["token"],
+            "bot_id": bots[bot_id]["bot_id"],
+            "type": bots[bot_id]["type"],
+            "token": bots[bot_id]["token"],
             "tao_bot": {
                 "username": tc["username"],
                 "chats": tc["chats"],
@@ -84,7 +89,7 @@ class MasterConfig:
         }
 
     def bots(self) -> list[dict[str, Any]]:
-        return [self.bot_conf(bot_id) for bot_id in self._d.keys()]
+        return [self.bot_conf(bot_id) for bot_id in self._d["bots"]]
 
     def modifier(self) -> Modifier:
         return MasterConfig.Modifier(self._d, self._path_to_master_conf)

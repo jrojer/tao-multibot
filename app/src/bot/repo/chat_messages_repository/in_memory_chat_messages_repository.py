@@ -3,7 +3,7 @@ from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import ChatMessagesRepository
 
 
-class InMemoryMessagesRepository(ChatMessagesRepository):
+class InMemoryChatMessagesRepository(ChatMessagesRepository):
     def __init__(self):
         self._messages: dict[str, ChatMessage] = {}
 

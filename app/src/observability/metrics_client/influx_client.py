@@ -8,7 +8,7 @@ from app.src.observability.logger import Logger
 logger = Logger(__name__)
 
 
-class InfluxClient:
+class InfluxdbClient:
     def __init__(self, url: str, token: str, org: str, bucket: str):
         self._url: str = check_required(url, "url", str)
         self._token: str = check_required(token, "token", str)

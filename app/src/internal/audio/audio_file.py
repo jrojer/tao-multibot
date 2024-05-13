@@ -11,7 +11,7 @@ class AudioFile:
         check_required(data, "data", bytes)
         check_that(ext in [".ogg", ".wav"], f"ext is not .ogg or .wav")
         new_audio_file = AudioFile()
-        new_audio_file._path = Path(env.TMP_DIR) / "{name}{ext}".format(
+        new_audio_file._path = env.TMP_DIR() / "{name}{ext}".format(
             name=uuid4(),
             ext=ext,
         )
@@ -33,7 +33,7 @@ class AudioFile:
     @staticmethod
     def create_empty_file(ext: str) -> Path:
         check_that(ext in [".ogg", ".wav"], f"ext is not .ogg or .wav")
-        path = Path(env.TMP_DIR) / "{name}{ext}".format(
+        path = env.TMP_DIR() / "{name}{ext}".format(
             name=uuid4(),
             ext=ext,
         )
@@ -43,7 +43,7 @@ class AudioFile:
         return path
 
     def __init__(self):
-        self._path: Path = None # type: ignore
+        self._path: Path = None  # type: ignore
 
     def is_wav(self) -> bool:
         return self._path.suffix == ".wav"
@@ -53,7 +53,7 @@ class AudioFile:
 
     def path(self) -> Path:
         return self._path
-    
+
     def name(self) -> str:
         return self._path.name
 
@@ -62,11 +62,11 @@ class AudioFile:
             return f.read()
 
     def __del__(self) -> None:
-        if self._path is not None: # type: ignore
+        if self._path is not None:  # type: ignore
             self._path.unlink()
 
     def __str__(self) -> str:
         return self._path.name
-    
+
     def __repr__(self) -> str:
         return self._path.name

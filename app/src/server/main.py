@@ -10,8 +10,8 @@ logger = Logger(__name__)
 
 
 def main():
-    server_port = int(env.SERVER_PORT)
-    master_config = MasterConfig(env.MAIN_CONFIG)
+    master_config = MasterConfig(env.MASTER_CONFIG_PATH())
+    server_port = env.SERVER_PORT()
     runtime_manager = RuntimeManager(server_port, master_config)
     resources = Server(server_port, master_config, runtime_manager)
 

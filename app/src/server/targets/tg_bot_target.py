@@ -6,13 +6,16 @@ from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
     ChatMessagesRepository,
 )
 from app.src.bot.repo.chat_messages_repository.in_memory_chat_messages_repository import (
-    InMemoryMessagesRepository,
+    InMemoryChatMessagesRepository,
+)
+from app.src.bot.repo.chat_messages_repository.postgres_chat_messages_repository import (
+    PostgresChatMessagesRepository,
 )
 from app.src.bot.tao_bot.tao_bot import TaoBot
 from app.src.bot.tao_bot.tao_bot_commands import TaoBotCommands
 from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
 from app.src.butter.checks import check_required
-from app.src.env import in_test_mode
+from app.src import env
 from app.src.gpt.gpt_completer import GptCompleter
 from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.gpt_gateway import GptGateway
@@ -42,8 +45,16 @@ class TgBotTarget:
         gpt_conf: GptConf = GptConfClient(self._conf_client, self._bot_id)
         tao_bot_conf: TaoBotConf = TaoBotConfClient(self._conf_client, self._bot_id)
 
-        # TODO: replace with PostgresMessagesRepository
-        repo: ChatMessagesRepository = InMemoryMessagesRepository()
+        if env.POSTGRES_ENABLED():
+            repo: ChatMessagesRepository = PostgresChatMessagesRepository(
+                host=env.POSTGRES_HOST(),
+                port=env.POSTGRES_PORT(),
+                user=env.POSTGRES_USER(),
+                password=env.POSTGRES_PASSWORD(),
+                schemas=env.POSTGRES_SCHEMAS(),
+            )
+        else:
+            repo: ChatMessagesRepository = InMemoryChatMessagesRepository()
         gpt_completer: GptCompleter = OpenaiGptCompleter(gpt_conf)
         gpt_gateway: GptGateway = GptGateway(gpt_completer)
         tao_bot: TaoBot = TaoBot(repo, gpt_gateway, tao_bot_conf)
@@ -54,7 +65,7 @@ class TgBotTarget:
             tao_bot, bot_commands, self._telegram_token, gpt_conf.token()
         )
 
-        if not in_test_mode():
+        if not env.in_test_mode():
             this_pid: int = os.getpid()
 
             async def wait_for_stop():

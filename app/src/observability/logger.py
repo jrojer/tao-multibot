@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 import threading
 from typing import Any
 from app.src import env
@@ -8,7 +9,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
     handlers=[
-        logging.FileHandler(env.LOG_DIR / (threading.current_thread().name + ".log")),
+        logging.FileHandler(Path(env.LOG_DIR()) / (threading.current_thread().name + ".log")),
         InfluxDbLoggerHandler(),
     ],
 )
@@ -24,7 +25,7 @@ def reconfigure_logging():
         level=logging.INFO,
         handlers=[
             logging.FileHandler(
-                env.LOG_DIR / (threading.current_thread().name + ".log")
+                Path(env.LOG_DIR()) / (threading.current_thread().name + ".log")
             ),
             InfluxDbLoggerHandler(),
         ],

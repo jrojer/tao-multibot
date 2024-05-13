@@ -1,7 +1,7 @@
 # type: ignore
 from logging import Handler, getLevelName
 from app.src.observability.metrics_client.influxdb_metrics_client import (
-    InfluxDbMetricsClient,
+    MetricsReporter,
 )
 
 
@@ -12,7 +12,7 @@ class InfluxDbLoggerHandler(Handler):
 
     def __init__(self):
         Handler.__init__(self)
-        self.metrics_client = InfluxDbMetricsClient()
+        self.metrics_client = MetricsReporter()
 
     def close(self):
         self.metrics_client.close()

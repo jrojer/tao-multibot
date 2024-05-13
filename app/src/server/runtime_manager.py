@@ -13,7 +13,7 @@ multiprocessing.set_start_method("fork")
 class RuntimeManager:
     def __init__(self, server_port: int, master_config: MasterConfig):
         self._server_port = server_port
-        self._master_config = check_required(master_config, "main_config", MasterConfig)
+        self._master_config: MasterConfig = check_required(master_config, "main_config", MasterConfig)
         self._state: dict[str, tuple[multiprocessing.Process, synchronize.Event]] = {}
 
     def start_all(self):
@@ -22,7 +22,7 @@ class RuntimeManager:
 
     def stop_all(self):
         for bot_conf in self._master_config.bots():
-            self.stop(bot_conf.bot_id())
+            self.stop(bot_conf["bot_id"])
 
     def start(self, bot_conf: dict[str, Any]):
         bot_id: str = bot_conf["bot_id"]
@@ -30,7 +30,7 @@ class RuntimeManager:
             bot = TgBotTarget(HttpConfClient(self._server_port, bot_id), bot_conf["token"], bot_id)
             stop_event: synchronize.Event = multiprocessing.Event()
             this_pid: int = os.getpid()
-            if env.DEBUG:
+            if env.DEBUG():
                 bot.run(stop_event, this_pid, is_subprocess=False)
             else:
                 process = multiprocessing.Process(target=bot.run, args=(stop_event, this_pid, True))
