@@ -12,6 +12,7 @@ from app.src.butter.checks import check_required
 from app.src.butter.clock import timestamp_now
 from app.src.butter.functional import first_present
 from app.src.gpt.chatform_message import ChatformMessage
+from app.src.heads.tg_bot.v1.error_handler import error_handler
 from app.src.heads.tg_bot.v1.tg_bot_wrapper import TgBotWrapper
 from app.src.heads.tg_bot.v1.tg_voice_downloader import TgVoiceDownloader
 from app.src.internal.audio.audio_file import AudioFile
@@ -107,6 +108,7 @@ class TgApplication:
         self._application.add_handler(
             MessageHandler(filters.TEXT | filters.VOICE, self.create_handler())
         )
+        self._application.add_error_handler(error_handler)
         self._tg_bot: TgBotWrapper = TgBotWrapper(self._application.bot)
         self._openai_token = check_required(openai_token, "openai_token", str)
 

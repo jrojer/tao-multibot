@@ -1,4 +1,7 @@
 import time
+from app.src.bot.repo.chat_messages_repository.postgres_chat_messages_repository import (
+    PostgresChatMessagesRepository,
+)
 from app.src.observability.logger import Logger
 from app.src.server.api.server import Server
 from app.src.server.master_config.master_config import MasterConfig
@@ -22,6 +25,17 @@ def main():
     signal.signal(signal.SIGINT, handler)  # type: ignore
 
     p = resources.start()
+
+    # wait for the server to start
     time.sleep(5)
+
+    if env.POSTGRES_ENABLED():
+        PostgresChatMessagesRepository(
+            host=env.POSTGRES_HOST(),
+            port=env.POSTGRES_PORT(),
+            user=env.POSTGRES_USER(),
+            password=env.POSTGRES_PASSWORD(),
+            schemas=env.POSTGRES_SCHEMAS(),
+        ).migrate()
     runtime_manager.start_all()
     p.join()

@@ -101,7 +101,7 @@ class TaoBot:
         messages = self._messages_repo.fetch_last_messages_by_chat_and_adder(
             chat_id, self.bot_username(), self._conf.number_of_messages_per_completion()
         )
-        for m in reversed(messages):
+        for m in messages:
             if m.user() == self.bot_username():
                 chatform.add_message(assistant_message(m.content()))
             else:

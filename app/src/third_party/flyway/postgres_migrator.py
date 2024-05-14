@@ -1,6 +1,9 @@
 from app.src.butter.checks import check_that
+from app.src.observability.logger import Logger
 from app.src.third_party.flyway.migrator import Migrator
 from app.src.internal.shell.command import Command
+
+logger = Logger(__name__)
 
 
 class PostgresMigrator(Migrator):
@@ -12,6 +15,7 @@ class PostgresMigrator(Migrator):
         self._schemas = schemas
 
     def migrate(self, db_name: str, dir: str) -> None:
+        logger.info("Migrating database %s with Flyway", db_name)
         cmd = Command(
             [
                 "flyway",
