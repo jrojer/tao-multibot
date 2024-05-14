@@ -8,7 +8,7 @@ def is_empty_string(value: Any) -> bool:
     return isinstance(value, str) and len(value.strip()) == 0
 
 
-def check_type(value: Any, name: str, t: type) -> Any:
+def check_optional(value: Any, name: str, t: type) -> Any:
     if value is not None and not isinstance(value, t):
         raise TypeError(
             f"{name} should be {t.__name__}, but it is {value.__class__.__name__}"
@@ -20,7 +20,7 @@ def check_required(value: Any, name: str, t:type=object) -> Any:
     if value is None or is_empty_string(value):
         raise ValueError(f"{name} is required")
     if t is not object:
-        check_type(value, name, t)
+        check_optional(value, name, t)
     return value
 
 
@@ -57,7 +57,7 @@ def is_json(value: str) -> bool:
 
 
 def check_json(value: str, name: str) -> str:
-    check_type(value, name, str)
+    check_optional(value, name, str)
     if not is_json(value):
         raise ValueError(f"{name} should be a valid json")
     return value

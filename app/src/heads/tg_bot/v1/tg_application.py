@@ -82,6 +82,13 @@ def contains_bot_name(text: Optional[str], name_list: list[str]) -> bool:
     return any((name in text or capitalised(name) in text) for name in name_list)
 
 
+def _post_mentioned(message: Message) -> Optional[str]:
+    PREVIEW_LENGTH = 65
+    reply = message.reply_to_message
+    if reply is not None and reply.text is not None:
+        return reply.text[:PREVIEW_LENGTH]
+
+
 async def safe_reply_markdown(update: Update, post: str) -> None:
     message: Message = check_required(update.message, "update.message", Message)
     try:
@@ -124,6 +131,7 @@ class TgApplication:
             .from_user(username)
             .chat_name(message.chat.effective_name)
             .post(message.text if transcription is None else transcription)
+            .post_mentioned(_post_mentioned(message))
             .timestamp(timestamp_now())
             .is_reply_to_bot(is_reply_to_bot(message, self._bot.bot_username()))
             .is_dm_to_bot(is_direct_message(message))

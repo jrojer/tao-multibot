@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any
 from app.src.butter.checks import check_required, check_that
-
+from app.src import env
 
 class MasterConfig:
     class Modifier:
@@ -73,7 +73,7 @@ class MasterConfig:
                 "admins": tc["admins"],
                 "users": tc["users"],
                 "control_chat_id": tc["control_chat_id"],
-                "system_prompt": tc["system_prompt"],
+                "system_prompt": env.SYSTEM_PROMPT_FOR(bot_id),
                 "messages_per_completion": tc["messages_per_completion"],
                 "bot_mention_names": tc["bot_mention_names"],
             },

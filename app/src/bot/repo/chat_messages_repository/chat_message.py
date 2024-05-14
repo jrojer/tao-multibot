@@ -1,8 +1,8 @@
-from typing import Any
+from typing import Any, Optional
 from app.src.bot.repo.chat_messages_repository.content_type import ContentType
 from app.src.bot.repo.chat_messages_repository.role import Role
 from app.src.bot.repo.chat_messages_repository.source import Source
-from app.src.butter.checks import check_required, check_type
+from app.src.butter.checks import check_required, check_optional
 from app.src.butter.clock import timestamp_now, timestamp_to_readable_datetime
 from app.src.butter.functional import or_else
 
@@ -21,6 +21,7 @@ class ChatMessage:
             self._source = None
             self._role = None
             self._added_by = None
+            self._reply_to = None
 
         def id(self, id: str) -> "ChatMessage.Builder":
             self._id = id
@@ -58,6 +59,10 @@ class ChatMessage:
             self._added_by = added_by
             return self
 
+        def reply_to(self, reply_to: str) -> "ChatMessage.Builder":
+            self._reply_to = reply_to
+            return self
+
         def build(self):
             return ChatMessage(self)
 
@@ -68,7 +73,7 @@ class ChatMessage:
     def __init__(self, builder: Builder):
         self._id = or_else(builder._id, lambda: str(uuid4()))  # type: ignore
         self._timestamp = or_else(
-            check_type(builder._timestamp, "timestamp", int), timestamp_now  # type: ignore
+            check_optional(builder._timestamp, "timestamp", int), timestamp_now  # type: ignore
         )
         self._content = check_required(builder._content, "content", str)  # type: ignore
         self._content_type = check_required(builder._content_type, "content_type", str)  # type: ignore
@@ -77,6 +82,7 @@ class ChatMessage:
         self._source = check_required(builder._source, "messenger", str)  # type: ignore
         self._role = check_required(builder._role, "role", str)  # type: ignore
         self._added_by = check_required(builder._added_by, "added_by", str)  # type: ignore
+        self._reply_to = check_optional(builder._reply_to, "reply_to", str)  # type: ignore
 
     def id(self) -> str:
         return self._id
@@ -104,6 +110,9 @@ class ChatMessage:
 
     def added_by(self) -> str:
         return self._added_by
+
+    def reply_to(self) -> Optional[str]:
+        return self._reply_to
 
     def __repr__(self) -> str:
         return f"{timestamp_to_readable_datetime(self._timestamp)} {self._user}: {self._content}"
@@ -134,4 +143,5 @@ class ChatMessage:
             and self._source == other.source()
             and self._role == other.role()
             and self._added_by == other.added_by()
+            and self._reply_to == other.reply_to()
         )

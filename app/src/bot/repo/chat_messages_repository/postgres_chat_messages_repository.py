@@ -47,8 +47,8 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     def add(self, message: ChatMessage) -> str:
         cursor = self._conn.cursor()
         sql = f"""
-            INSERT INTO {TABLE_NAME} ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by")
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO {TABLE_NAME} ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to")
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ;
         """
         new_id = str(uuid4())
@@ -67,15 +67,15 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     ) -> List[ChatMessage]:
         cursor = self._conn.cursor()
         sql = f"""
-            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by"
+            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to"
             FROM {TABLE_NAME}
             WHERE "chat" = %s and "added_by" = %s
-            ORDER BY "timestamp"
+            ORDER BY "timestamp" DESC
             LIMIT %s;
         """
         cursor.execute(sql, (chat, adder, limit))
         records = cursor.fetchall()
-        return [_from_record(r) for r in records]
+        return [_from_record(r) for r in reversed(records)]
 
 
 def _from_record(r: tuple[Any, ...]) -> ChatMessage:
@@ -90,6 +90,7 @@ def _from_record(r: tuple[Any, ...]) -> ChatMessage:
         .source(Source.from_str(r[6]))
         .role(Role.from_str(r[7]))
         .added_by(r[8])
+        .reply_to(r[9])
         .build()
     )
 
@@ -105,4 +106,5 @@ def _to_record(m: ChatMessage, id: str) -> tuple[Any, ...]:
         m.source(),
         m.role(),
         m.added_by(),
+        m.reply_to(),
     )

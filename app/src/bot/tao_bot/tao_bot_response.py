@@ -1,5 +1,5 @@
 from typing import Any, Callable, Coroutine, Optional
-from app.src.butter.checks import check_type
+from app.src.butter.checks import check_optional
 from app.src.gpt.chatform_message import ChatformMessage
 
 
@@ -30,10 +30,10 @@ class TaoBotResponse:
             return TaoBotResponse(self)
 
     def __init__(self, builder: Builder):
-        self.reply_action: Optional[REPLY_ACTION_TYPE] = check_type(
+        self.reply_action: Optional[REPLY_ACTION_TYPE] = check_optional(
             builder._reply_action, "reply_action", Callable  # type: ignore
         )
-        self.postreply_action: Optional[POSTREPLY_ACTION_TYPE] = check_type(
+        self.postreply_action: Optional[POSTREPLY_ACTION_TYPE] = check_optional(
             builder._postreply_action, "postreply_action", Callable  # type: ignore
         )
 

@@ -3,7 +3,7 @@ from app.src.butter.checks import (
     check_any_present,
     check_one_of,
     check_required,
-    check_type,
+    check_optional,
 )
 import unicodedata
 
@@ -151,14 +151,14 @@ class ChatformMessage:
             [SYSTEM, USER, ASSISTANT, FUNCTION],
         )
         self._content = check_required(builder._content, CONTENT, str) # type: ignore
-        self._name = _safe_format_username(check_type(builder._name, NAME, str)) # type: ignore
-        self._function_call = check_type(
+        self._name = _safe_format_username(check_optional(builder._name, NAME, str)) # type: ignore
+        self._function_call = check_optional(
             builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall # type: ignore
         )
         check_any_present(
             [self._content, self._function_call], [CONTENT, FUNCTION_CALL]
         )
-        self._usage = check_type(builder._usage, USAGE, ChatformMessage.Usage) # type: ignore
+        self._usage = check_optional(builder._usage, USAGE, ChatformMessage.Usage) # type: ignore
 
     def role(self) -> str:
         return self._role

@@ -6,7 +6,9 @@ from app.src.server.api.conf_client import ConfClient
 
 class GptConfClient(GptConf):
     def __init__(self, api_client: ConfClient, bot_id: str):
-        self._conf_client: ConfClient = check_required(api_client, "conf_client", ConfClient)
+        self._conf_client: ConfClient = check_required(
+            api_client, "conf_client", ConfClient
+        )
         self._bot_id: str = bot_id
 
     def _conf(self) -> dict[str, Any]:
@@ -23,12 +25,12 @@ class GptConfClient(GptConf):
 
     def max_tokens(self) -> int:
         return self._conf()["max_tokens"]
-    
+
     def top_p(self) -> float:
         return self._conf()["top_p"]
-    
+
     def frequency_penalty(self) -> float:
         return self._conf()["frequency_penalty"]
-    
+
     def presence_penalty(self) -> float:
         return self._conf()["presence_penalty"]

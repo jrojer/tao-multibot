@@ -1,6 +1,6 @@
 from typing import Optional
 from app.src.internal.audio.voice import Voice
-from app.src.butter.checks import check_required, check_that, check_type
+from app.src.butter.checks import check_required, check_that, check_optional
 
 
 class TaoBotUpdate:
@@ -10,6 +10,7 @@ class TaoBotUpdate:
             self._chat_id: Optional[str] = None
             self._from_user: Optional[str] = None
             self._post: Optional[str] = None
+            self._post_mentioned: Optional[str] = None
             self._voice: Optional[Voice] = None
             self._chat_name: Optional[str] = None
             self._timestamp: Optional[int] = None
@@ -27,6 +28,10 @@ class TaoBotUpdate:
 
         def post(self, post: Optional[str]):
             self._post = post
+            return self
+        
+        def post_mentioned(self, post_mentioned: Optional[str]):
+            self._post_mentioned = post_mentioned
             return self
 
         def voice(self, voice: Voice) -> "TaoBotUpdate.Builder":
@@ -59,8 +64,9 @@ class TaoBotUpdate:
     def __init__(self, builder: Builder):
         self._chat_id = check_required(builder._chat_id, "chat_id", str) # type: ignore
         self._from_user = check_required(builder._from_user, "from_user", str) # type: ignore
-        self._post = check_type(builder._post, "post", str) # type: ignore
-        self._voice = check_type(builder._voice, "voice", Voice) # type: ignore
+        self._post = check_optional(builder._post, "post", str) # type: ignore
+        self._post_mentioned = check_optional(builder._post_mentioned, "post_mentioned", str) # type: ignore
+        self._voice = check_optional(builder._voice, "voice", Voice) # type: ignore
         check_that(
             builder._post is not None or builder._voice is not None, # type: ignore
             "Tao update must contain a post or a voice",
@@ -87,11 +93,14 @@ class TaoBotUpdate:
 
     def post(self):
         return self._post
+    
+    def post_mentioned(self):
+        return self._post_mentioned
 
     def voice(self) -> Optional[Voice]:
         return self._voice
 
-    def chat_name(self):
+    def chat_name(self) -> str:
         return self._chat_name
 
     def timestamp(self) -> int:

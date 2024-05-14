@@ -49,6 +49,24 @@ def MASTER_CONFIG_PATH() -> Path:
     return p
 
 
+# TODO: consider reading system prompt for the path provided in the master config
+def SYSTEM_PROMPT_PATH(bot_id: str) -> Path:
+    p = _create_if_not_exists(VAR_DIR() / "system_prompts") / (bot_id + ".txt")
+    p.touch()
+    return p
+
+
+def SYSTEM_PROMPT_FOR(bot_id: str) -> str:
+    p = SYSTEM_PROMPT_PATH(bot_id)
+    with open(p, "r") as f:
+        txt = f.read()
+    if len(txt) == 0:
+        txt = "You are an assistant."
+        with open(p, "w") as f:
+            f.write(txt)
+    return txt
+
+
 # INFLUXDB
 
 
@@ -123,3 +141,6 @@ def init_env(master_conf_path: str, var_dir_path: str):
     set_var("INFLUXDB", infra["influxdb"])
     set_var("SERVER_PORT", infra["server"]["port"])
     set_var("DEBUG", infra["debug"])
+
+
+init_env("./master.json", "./var")

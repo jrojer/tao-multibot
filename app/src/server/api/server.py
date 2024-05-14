@@ -3,7 +3,7 @@ import threading
 from aiohttp import web
 
 from app.src.butter.checks import check_required
-from app.src.observability.logger import Logger
+from app.src.observability.logger import Logger, configure_logging
 from app.src.server.api.resource import Resource
 from app.src.server.api.resources.disable_for_username_resource import (
     DisableForUsernameResource,
@@ -65,6 +65,7 @@ class Server:
         def target():
             import asyncio
             threading.current_thread().name = "server"
+            configure_logging()
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self._start())
             loop.run_forever()

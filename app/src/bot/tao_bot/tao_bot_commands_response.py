@@ -1,5 +1,5 @@
 from typing import Any, Callable, Coroutine, Optional
-from app.src.butter.checks import check_type
+from app.src.butter.checks import check_optional
 
 
 REPLY_ACTION_TYPE = Callable[[], Coroutine[Any, Any, str]]
@@ -21,7 +21,7 @@ class TaoBotCommandsResponse:
             return TaoBotCommandsResponse(self)
 
     def __init__(self, builder: Builder):
-        self.reply_action: Optional[REPLY_ACTION_TYPE] = check_type(
+        self.reply_action: Optional[REPLY_ACTION_TYPE] = check_optional(
             builder._reply_action, "reply_action", Callable  # type: ignore
         )
 

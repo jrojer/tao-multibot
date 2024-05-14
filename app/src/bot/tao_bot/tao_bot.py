@@ -56,9 +56,23 @@ def _a_chat_messasge_from(update: TaoBotUpdate, bot_username: str) -> ChatMessag
         .source(Source.TELEGRAM)
         .role(Role.USER)
         .added_by(bot_username)
+        .reply_to(update.post_mentioned())
         .build()
     )
     return message
+
+
+def _report_usage(usage: ChatformMessage.Usage, update: TaoBotUpdate):
+    metrics.write(
+        measurement="usage",
+        tags={
+            "bot": update.from_user(),
+            "chat": update.chat_name(),
+            "chat_id": update.chat_id(),
+            "user": update.from_user(),
+        },
+        fields={"usage": str(usage.completion_tokens() + usage.prompt_tokens())},
+    )
 
 
 class TaoBot:
@@ -105,7 +119,11 @@ class TaoBot:
             if m.user() == self.bot_username():
                 chatform.add_message(assistant_message(m.content()))
             else:
-                chatform.add_message(user_message(m.content(), m.user()))
+                if m.reply_to() is not None:
+                    content = f"{m.content()} (reply to: {m.reply_to()})"
+                else:
+                    content = m.content()
+                chatform.add_message(user_message(content, m.user()))
         return chatform
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
@@ -137,20 +155,9 @@ class TaoBot:
                 [],
             )
 
-            usage: ChatformMessage.Usage = check_required(
-                reply_message.usage(), "usage", ChatformMessage.Usage
-            )
-            metrics.write(
-                measurement="usage",
-                tags={
-                    "bot": self.bot_username(),
-                    # "chat": update.chat_name(),
-                    "chat_id": update.chat_id(),
-                    "user": update.from_user(),
-                },
-                fields={
-                    "usage": str(usage.completion_tokens() + usage.prompt_tokens())
-                },
+            _report_usage(
+                check_required(reply_message.usage(), "usage", ChatformMessage.Usage),
+                update,
             )
 
             bot_message = (
