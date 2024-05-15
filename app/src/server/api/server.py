@@ -1,5 +1,4 @@
 import multiprocessing
-import threading
 from aiohttp import web
 
 from app.src.butter.checks import check_required
@@ -64,6 +63,7 @@ class Server:
     def start(self) -> multiprocessing.Process:
         def target():
             import asyncio
+            import threading
             threading.current_thread().name = "server"
             configure_logging()
             loop = asyncio.get_event_loop()

@@ -70,17 +70,17 @@ class TaoBotCommands:
         )
 
     def _is_command_for(self, bot_username: str, update: TaoBotUpdate) -> bool:
-        if update.post() is None:
+        if update.content() is None:
             return False
         for cmd in self._commands().keys():
-            if update.post().startswith(_command(bot_username, cmd)):
+            if update.content().startswith(_command(bot_username, cmd)):
                 return True
         return False
 
     def _run_command_for(self, bot_username: str, update: TaoBotUpdate) -> str:
         if not self._is_command_for(bot_username, update):
             raise AssertionError("Programmer error: unchecked command")
-        return self._commands()[_extract_cmd(update.post())](update)
+        return self._commands()[_extract_cmd(update.content())](update)
 
     def handle_command(
         self, bot_username: str, tao_update: TaoBotUpdate
@@ -91,6 +91,6 @@ class TaoBotCommands:
                 return reply(command_reply)
             else:
                 logger.warning(
-                    f'An attempt to call "{tao_update.post()}" from {tao_update.chat_id()}. Skipping execution.'
+                    f'An attempt to call "{tao_update.content()}" from {tao_update.chat_id()}. Skipping execution.'
                 )
         return ignore()

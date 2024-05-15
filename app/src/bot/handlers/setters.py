@@ -19,7 +19,7 @@ def _extract_int(string: str) -> int:
 def get_set_number_of_messages_per_completion_handler(client: ConfClient):
     def handler(update: TaoBotUpdate) -> str:
         try:
-            value = _extract_int(update.post())
+            value = _extract_int(update.content())
             client.set_number_of_messages_per_completion(value)
             logger.info("number_of_messages_per_completion set to %s", value)
             return f"`number_of_messages_per_completion` set to {value}. /{CONFIG}"

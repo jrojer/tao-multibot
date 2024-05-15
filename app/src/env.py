@@ -49,6 +49,10 @@ def MASTER_CONFIG_PATH() -> Path:
     return p
 
 
+def IMAGES_DIR() -> Path:
+    return _create_if_not_exists(VAR_DIR() / "images")
+
+
 # TODO: consider reading system prompt for the path provided in the master config
 def SYSTEM_PROMPT_PATH(bot_id: str) -> Path:
     p = _create_if_not_exists(VAR_DIR() / "system_prompts") / (bot_id + ".txt")

@@ -1,3 +1,4 @@
+import random
 from typing import Optional
 from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
@@ -33,7 +34,7 @@ def _log_update(update: TaoBotUpdate, text: str, cf_size: int = 0):
         update.chat_name(),
         update.chat_id(),
         cf_size,
-        update.post(),
+        update.content(),
     )
 
 
@@ -45,18 +46,30 @@ def _should_reply(update: TaoBotUpdate):
     )
 
 
+def _random_alphanumeric(length: int) -> str:
+    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+    return "".join(random.choices(alphabet, k=length))
+
+
 def _a_chat_messasge_from(update: TaoBotUpdate, bot_username: str) -> ChatMessage:
+    content_type = ContentType.TEXT
+    ref = None
+    if update.content_type() == "jpg":
+        content_type = ContentType.JPG
+        ref = _random_alphanumeric(5)
+
     message = (
         ChatMessage.new()
         .timestamp(update.timestamp())
-        .content(update.post())
-        .content_type(ContentType.TEXT)
+        .content(update.content())
+        .content_type(content_type)
         .user(update.from_user())
         .chat(update.chat_id())
         .source(Source.TELEGRAM)
         .role(Role.USER)
         .added_by(bot_username)
         .reply_to(update.post_mentioned())
+        .ref(ref)
         .build()
     )
     return message
@@ -116,14 +129,20 @@ class TaoBot:
             chat_id, self.bot_username(), self._conf.number_of_messages_per_completion()
         )
         for m in messages:
-            if m.user() == self.bot_username():
-                chatform.add_message(assistant_message(m.content()))
+            if m.content_type() == ContentType.JPG:
+                content = f'User "{m.user()}" sent image (ref: {m.ref()})'
+                user = "server"
             else:
-                if m.reply_to() is not None:
-                    content = f"{m.content()} (reply to: {m.reply_to()})"
-                else:
-                    content = m.content()
-                chatform.add_message(user_message(content, m.user()))
+                content = m.content()
+                user = m.user()
+
+            if m.reply_to() is not None:
+                content = f"{content} (reply to: {m.reply_to()})"
+
+            if m.user() == self.bot_username():
+                chatform.add_message(assistant_message(content))
+            else:
+                chatform.add_message(user_message(content, user))
         return chatform
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
@@ -155,10 +174,11 @@ class TaoBot:
                 [],
             )
 
-            _report_usage(
-                check_required(reply_message.usage(), "usage", ChatformMessage.Usage),
-                update,
-            )
+            if reply_message.usage() is not None:
+                _report_usage(
+                    reply_message.usage(),  # type: ignore
+                    update,
+                )
 
             bot_message = (
                 ChatMessage.new()

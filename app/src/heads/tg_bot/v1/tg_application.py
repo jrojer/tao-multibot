@@ -113,24 +113,45 @@ class TgApplication:
         )
         self._application = Application.builder().token(tg_token).build()
         self._application.add_handler(
-            MessageHandler(filters.TEXT | filters.VOICE, self.create_handler())
+            MessageHandler(
+                filters.TEXT | filters.VOICE | filters.PHOTO, self.create_handler()
+            )
         )
         self._application.add_error_handler(error_handler)
         self._tg_bot: TgBotWrapper = TgBotWrapper(self._application.bot)
         self._openai_token = check_required(openai_token, "openai_token", str)
 
+    async def _extract_image_if_present(self, message: Message) -> Optional[str]:
+        if len(message.photo) > 0:
+            imageId = message.photo[-1].file_id
+            file = await self._tg_bot.get_file(imageId)
+            return file.file_path
+
     def to_tao_update(
-        self, update: Update, transcription: Optional[str] = None
+        self,
+        update: Update,
+        transcription: Optional[str] = None,
+        image_ulr: Optional[str] = None,
     ) -> TaoBotUpdate:
         message: Message = check_required(update.message, "update.message", Message)
         username = extract_username(update)
+
+        content_type = "text"
+        content = message.text
+    
+        if transcription is not None:
+            content = transcription
+        elif image_ulr is not None:
+            content = image_ulr
+            content_type = "jpg"
 
         return (
             TaoBotUpdate.new()
             .chat_id(extract_chat_id(update))
             .from_user(username)
             .chat_name(message.chat.effective_name)
-            .post(message.text if transcription is None else transcription)
+            .content(content)
+            .content_type(content_type)
             .post_mentioned(_post_mentioned(message))
             .timestamp(timestamp_now())
             .is_reply_to_bot(is_reply_to_bot(message, self._bot.bot_username()))
@@ -143,7 +164,6 @@ class TgApplication:
         )
 
     def start(self):
-        # Run the bot until the user presses Ctrl-C
         self._application.run_polling()
 
     def stop(self):
@@ -165,6 +185,8 @@ class TgApplication:
             ):
                 return
 
+            # TODO: move the downloading/trascription logic to the TaoBot
+            #       and just pass the update containing content_type and url to the bot
             if update.message.voice is not None:
                 ogg_file: AudioFile = await TgVoiceDownloader(self._tg_bot).download(
                     update.message.voice.file_id
@@ -174,7 +196,8 @@ class TgApplication:
                 ).transcribe(ogg_file)
                 tao_update = self.to_tao_update(update, transcription)
             else:
-                tao_update = self.to_tao_update(update)
+                image_url = await self._extract_image_if_present(update.message)
+                tao_update = self.to_tao_update(update, None, image_url)
 
             commands_response: TaoBotCommandsResponse = self._commands.handle_command(
                 self._bot.bot_username(), tao_update

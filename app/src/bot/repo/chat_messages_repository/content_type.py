@@ -4,7 +4,7 @@ import enum
 class ContentType(enum.Enum):
     TEXT = "text"
     VOICE = "voice"
-    IMAGE = "image"
+    JPG = "jpg"
     VIDEO = "video"
     AUDIO = "audio"
     DOCUMENT = "document"

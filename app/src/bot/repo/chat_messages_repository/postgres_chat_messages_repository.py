@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 from uuid import uuid4
 
 from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
@@ -47,8 +47,8 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     def add(self, message: ChatMessage) -> str:
         cursor = self._conn.cursor()
         sql = f"""
-            INSERT INTO {TABLE_NAME} ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to")
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO {TABLE_NAME} ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to", "ref")
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ;
         """
         new_id = str(uuid4())
@@ -67,7 +67,7 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     ) -> List[ChatMessage]:
         cursor = self._conn.cursor()
         sql = f"""
-            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to"
+            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to", "ref"
             FROM {TABLE_NAME}
             WHERE "chat" = %s and "added_by" = %s
             ORDER BY "timestamp" DESC
@@ -91,20 +91,22 @@ def _from_record(r: tuple[Any, ...]) -> ChatMessage:
         .role(Role.from_str(r[7]))
         .added_by(r[8])
         .reply_to(r[9])
+        .ref(r[10])
         .build()
     )
 
 
-def _to_record(m: ChatMessage, id: str) -> tuple[Any, ...]:
+def _to_record(m: ChatMessage, id: str) -> tuple[Optional[str], ...]:
     return (
         id,
-        m.timestamp(),
+        str(m.timestamp()),
         m.content(),
-        m.content_type(),
+        m.content_type().value,
         m.user(),
         m.chat(),
-        m.source(),
-        m.role(),
+        m.source().value,
+        m.role().value,
         m.added_by(),
         m.reply_to(),
+        m.ref(),
     )
