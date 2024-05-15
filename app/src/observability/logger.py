@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-import threading
 from typing import Any
 from app.src import env
 from app.src.observability.influxdb_logger_handler import InfluxDbLoggerHandler
@@ -13,23 +12,20 @@ class NoiseRecordsFilter(logging.Filter):
         )
 
 
-def configure_logging():
-    _fileHandler = logging.FileHandler(
-        Path(env.LOG_DIR()) / (threading.current_thread().name + ".log")
-    )
-    _fileHandler.addFilter(NoiseRecordsFilter())
+_fileHandler = logging.FileHandler(Path(env.LOG_DIR()) / ("app.log"))
+_fileHandler.addFilter(NoiseRecordsFilter())
 
-    _influxDbLoggerHandler = InfluxDbLoggerHandler()
-    _influxDbLoggerHandler.addFilter(NoiseRecordsFilter())
+_influxDbLoggerHandler = InfluxDbLoggerHandler()
+_influxDbLoggerHandler.addFilter(NoiseRecordsFilter())
 
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        level=logging.INFO,
-        handlers=[
-            _fileHandler,
-            _influxDbLoggerHandler,
-        ],
-    )
+logging.basicConfig(
+    format="%(asctime)s - %(processName)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+    handlers=[
+        _fileHandler,
+        _influxDbLoggerHandler,
+    ],
+)
 
 
 class Logger:
@@ -48,6 +44,3 @@ class Logger:
 
     def error(self, msg: str, *args: Any, **kwargs: Any):
         self.logger.error(msg, *args, **kwargs)
-
-
-configure_logging()

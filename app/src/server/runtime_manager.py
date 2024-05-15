@@ -31,7 +31,7 @@ class RuntimeManager:
             bot = TgBotTarget(conf_client, bot_conf["token"], bot_id)
             stop_event: synchronize.Event = multiprocessing.Event()
             this_pid: int = os.getpid()
-            process = multiprocessing.Process(target=bot.run, args=(stop_event, this_pid, True))
+            process = multiprocessing.Process(target=bot.run, args=(stop_event, this_pid, True), name=bot_id)
             process.start()
             self._state[bot_id] = (process, stop_event)
         else:

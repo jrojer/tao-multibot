@@ -16,6 +16,7 @@ from app.src.gpt.chatform import Chatform
 from app.src.gpt.chatform_message import (
     ChatformMessage,
     assistant_message,
+    function_result_message,
     user_message,
 )
 from app.src.gpt.gpt_gateway import GptGateway
@@ -43,7 +44,7 @@ def _should_reply(update: TaoBotUpdate):
         update.is_reply_to_bot()
         or update.is_dm_to_bot()
         or update.is_chat_mention_of_bot()
-    )
+    ) and (update.content_type() == "text")
 
 
 def _random_alphanumeric(length: int) -> str:
@@ -129,12 +130,7 @@ class TaoBot:
             chat_id, self.bot_username(), self._conf.number_of_messages_per_completion()
         )
         for m in messages:
-            if m.content_type() == ContentType.JPG:
-                content = f'User "{m.user()}" sent image (ref: {m.ref()})'
-                user = "server"
-            else:
-                content = m.content()
-                user = m.user()
+            content = m.content()
 
             if m.reply_to() is not None:
                 content = f"{content} (reply to: {m.reply_to()})"
@@ -142,11 +138,22 @@ class TaoBot:
             if m.user() == self.bot_username():
                 chatform.add_message(assistant_message(content))
             else:
-                chatform.add_message(user_message(content, user))
+                if m.content_type() == ContentType.JPG:
+                    chatform.add_message(
+                        function_result_message(
+                            "image",
+                            str(
+                                {
+                                    "user": m.user(),
+                                    "image": m.ref(),
+                                }
+                            ),
+                        )
+                    )
+                chatform.add_message(user_message(content, m.user()))
         return chatform
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
-        # TODO: the bot should know the message the current update replied to
         check_that(
             self.is_authorised(update.from_user(), update.chat_id()),
             "tao update must be authorised",

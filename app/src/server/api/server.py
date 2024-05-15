@@ -2,7 +2,7 @@ import multiprocessing
 from aiohttp import web
 
 from app.src.butter.checks import check_required
-from app.src.observability.logger import Logger, configure_logging
+from app.src.observability.logger import Logger
 from app.src.server.api.resource import Resource
 from app.src.server.api.resources.disable_for_username_resource import (
     DisableForUsernameResource,
@@ -63,13 +63,10 @@ class Server:
     def start(self) -> multiprocessing.Process:
         def target():
             import asyncio
-            import threading
-            threading.current_thread().name = "server"
-            configure_logging()
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self._start())
             loop.run_forever()
 
-        p = multiprocessing.Process(target=target)
+        p = multiprocessing.Process(target=target, name="server")
         p.start()
         return p

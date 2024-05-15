@@ -17,8 +17,6 @@ class InfluxDbLoggerHandler(Handler):
     def emit(self, record):
         if not env.INFLUXDB_ENABLED():
             return
-        # TODO: consider adding tags and the message separately, the formatting can be done on the frontend
-        msg = self.format(record)
         try:
             self.metrics_client.write(
                 "logs",
@@ -26,9 +24,9 @@ class InfluxDbLoggerHandler(Handler):
                     # TODO: add bot name and other context
                     "level": record.levelname,
                     "package": record.name,
-                    "thread": record.threadName,
+                    "process": record.processName,
                 },
-                {"message": msg},
+                {"message": record.message},
             )
         except Exception:
             return
