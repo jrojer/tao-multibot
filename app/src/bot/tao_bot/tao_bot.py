@@ -64,6 +64,7 @@ def _a_chat_messasge_from(update: TaoBotUpdate, bot_username: str) -> ChatMessag
         .role(Role.USER)
         .added_by(bot_username)
         .reply_to(update.post_mentioned())
+        .ref(update.ref())
         .build()
     )
     return message
@@ -75,6 +76,7 @@ class TaoBot:
         messages_repo: ChatMessagesRepository,
         gateway: GptGateway,
         config: TaoBotConf,
+        # TODO: revise dependencies
         gpt_token: str,
         content_downloader: ContentDownloader,
     ) -> None:
@@ -131,7 +133,8 @@ class TaoBot:
                             str(
                                 {
                                     "user": m.user(),
-                                    "ref": m.content(),
+                                    "content": m.content(),
+                                    "ref": m.ref(),
                                 }
                             ),
                         )

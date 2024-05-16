@@ -8,7 +8,7 @@ class Plugin(ABC):
         pass
 
     @abstractmethod
-    def call(self, name: str, args: str) -> str:
+    async def call(self, name: str, args: str) -> str:
         pass
 
     @abstractmethod

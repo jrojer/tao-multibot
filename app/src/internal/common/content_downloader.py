@@ -8,5 +8,5 @@ class ContentDownloader(ABC):
         pass
 
     @abstractmethod
-    async def adownload(self, ref: str) -> Any:
+    async def download(self, ref: str) -> Any:
         pass

@@ -28,11 +28,6 @@ class Command:
         self._stdout = result.stdout
         self._stderr = result.stderr
         self._returncode = result.returncode
-        logger.info(
-            "Command\n%s\nexecuted with return code: %d",
-            " ".join(self._cmd),
-            self._returncode,
-        )
         return self
 
     async def aexec(self) -> "Command":
@@ -46,11 +41,6 @@ class Command:
         self._stdout = stdout.decode()
         self._stderr = stderr.decode()
         self._returncode = check_required(proc.returncode, "returncode", int)
-        logger.info(
-            "Command\n%s\nexecuted with return code: %d",
-            " ".join(self._cmd),
-            self._returncode,
-        )
         return self
 
     def stdout(self) -> str:

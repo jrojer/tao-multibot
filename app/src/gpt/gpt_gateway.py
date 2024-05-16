@@ -47,7 +47,7 @@ class GptGateway:
 
             plugin: Plugin = plugin_by_function_name[function_call.name()]
 
-            result: str = plugin.call(function_call.name(), function_call.arguments())
+            result: str = await plugin.call(function_call.name(), function_call.arguments())
 
             result_message: ChatformMessage = function_result_message(function_call.name(), result)
 

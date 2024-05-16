@@ -22,6 +22,7 @@ class ChatMessage:
             self._role = None
             self._added_by = None
             self._reply_to = None
+            self._ref = None
 
         def id(self, id: str) -> "ChatMessage.Builder":
             self._id = id
@@ -36,7 +37,7 @@ class ChatMessage:
             return self
 
         def content_type(self, content_type: ContentType) -> "ChatMessage.Builder":
-            self._content_type = content_type.value
+            self._content_type = content_type
             return self
 
         def user(self, user: str) -> "ChatMessage.Builder":
@@ -48,11 +49,11 @@ class ChatMessage:
             return self
 
         def source(self, source: Source) -> "ChatMessage.Builder":
-            self._source = source.value
+            self._source = source
             return self
 
         def role(self, role: Role) -> "ChatMessage.Builder":
-            self._role = role.value
+            self._role = role
             return self
 
         def added_by(self, added_by: str) -> "ChatMessage.Builder":
@@ -61,6 +62,10 @@ class ChatMessage:
 
         def reply_to(self, reply_to: Optional[str]) -> "ChatMessage.Builder":
             self._reply_to = reply_to
+            return self
+        
+        def ref(self, ref: Optional[str]) -> "ChatMessage.Builder":
+            self._ref = ref
             return self
         
         def build(self):
@@ -76,13 +81,14 @@ class ChatMessage:
             check_optional(builder._timestamp, "timestamp", int), timestamp_now  # type: ignore
         )
         self._content = check_required(builder._content, "content", str)  # type: ignore
-        self._content_type = check_required(builder._content_type, "content_type", str)  # type: ignore
+        self._content_type = check_required(builder._content_type, "content_type", ContentType)  # type: ignore
         self._user = check_required(builder._user, "user", str)  # type: ignore
         self._chat = check_required(builder._chat, "chat", str)  # type: ignore
-        self._source = check_required(builder._source, "messenger", str)  # type: ignore
-        self._role = check_required(builder._role, "role", str)  # type: ignore
+        self._source = check_required(builder._source, "messenger", Source)  # type: ignore
+        self._role = check_required(builder._role, "role", Role)  # type: ignore
         self._added_by = check_required(builder._added_by, "added_by", str)  # type: ignore
         self._reply_to = check_optional(builder._reply_to, "reply_to", str)  # type: ignore
+        self._ref = check_optional(builder._ref, "ref", str)  # type: ignore
 
     def id(self) -> str:
         return self._id
@@ -94,7 +100,7 @@ class ChatMessage:
         return self._content
 
     def content_type(self) -> ContentType:
-        return ContentType.from_str(self._content_type)
+        return self._content_type
 
     def user(self) -> str:
         return self._user
@@ -103,16 +109,19 @@ class ChatMessage:
         return self._chat
 
     def source(self) -> Source:
-        return Source.from_str(self._source)
+        return self._source
 
     def role(self) -> Role:
-        return Role.from_str(self._role)
+        return self._role
 
     def added_by(self) -> str:
         return self._added_by
 
     def reply_to(self) -> Optional[str]:
         return self._reply_to
+    
+    def ref(self) -> Optional[str]:
+        return self._ref
     
     def __repr__(self) -> str:
         return f"{timestamp_to_readable_datetime(self._timestamp)} {self._user}: {self._content}"
@@ -128,6 +137,8 @@ class ChatMessage:
             "source": self._source,
             "role": self._role,
             "added_by": self._added_by,
+            "reply_to": self._reply_to,
+            "ref": self._ref,
         }
 
     # NOTE: no id in the comparison
@@ -144,4 +155,5 @@ class ChatMessage:
             and self._role == other.role()
             and self._added_by == other.added_by()
             and self._reply_to == other.reply_to()
+            and self._ref == other.ref()
         )

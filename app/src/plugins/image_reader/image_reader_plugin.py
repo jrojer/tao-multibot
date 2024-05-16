@@ -5,7 +5,7 @@ from app.src.gpt.plugin import Plugin
 from app.src.internal.common.content_downloader import ContentDownloader
 from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
-from app.src.plugins.image_reader.simple_image_text_completer import (
+from app.src.gpt.simple_image_text_completer import (
     SimpleImageTextCompleter,
 )
 
@@ -48,7 +48,7 @@ class ImageReaderPlugin(Plugin):
             }
         ]
 
-    def call(self, name: str, args: str) -> str:
+    async def call(self, name: str, args: str) -> str:
         logger.info("Calling function: %s (%s)", name, args)
         check_that(name == "read_image", "Function name must be 'read_image'")
 
@@ -56,11 +56,11 @@ class ImageReaderPlugin(Plugin):
         ref = d["ref"]
         prompt = d["prompt"]
 
-        image: Image = self._content_downloader.download(ref)
+        image: Image = await self._content_downloader.download(ref)
 
-        return SimpleImageTextCompleter(self._system_prompt, self._token).complete(
-            image, prompt
-        )
+        return await SimpleImageTextCompleter(
+            self._system_prompt, self._token
+        ).complete(image, prompt)
 
     def is_delegate(self) -> bool:
         return True

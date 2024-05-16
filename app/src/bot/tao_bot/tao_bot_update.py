@@ -17,6 +17,7 @@ class TaoBotUpdate:
             self._is_reply_to_bot = False
             self._is_dm_to_bot = False
             self._is_chat_mention_of_bot = False
+            self._ref = None
 
         def chat_id(self, chat_id: str):
             self._chat_id = chat_id
@@ -29,12 +30,12 @@ class TaoBotUpdate:
         def content(self, post: str):
             self._content = post
             return self
-        
+
         # TODO: make enum
         def content_type(self, content_type: str):
             self._content_type = content_type
             return self
-        
+
         def post_mentioned(self, post_mentioned: Optional[str]):
             self._post_mentioned = post_mentioned
             return self
@@ -63,29 +64,34 @@ class TaoBotUpdate:
             self._is_chat_mention_of_bot = is_chat_mention_of_bot
             return self
 
+        def ref(self, ref: Optional[str]):
+            self._ref = ref
+            return self
+
         def build(self):
             return TaoBotUpdate(self)
 
     def __init__(self, builder: Builder):
-        self._chat_id = check_required(builder._chat_id, "chat_id", str) # type: ignore
-        self._from_user = check_required(builder._from_user, "from_user", str) # type: ignore
-        self._content = check_required(builder._content, "post", str) # type: ignore
-        self._content_type = check_required(builder._content_type, "content_type", str) # type: ignore
-        self._post_mentioned = check_optional(builder._post_mentioned, "post_mentioned", str) # type: ignore
-        self._voice = check_optional(builder._voice, "voice", Voice) # type: ignore
+        self._chat_id = check_required(builder._chat_id, "chat_id", str)  # type: ignore
+        self._from_user = check_required(builder._from_user, "from_user", str)  # type: ignore
+        self._content = check_required(builder._content, "post", str)  # type: ignore
+        self._content_type = check_required(builder._content_type, "content_type", str)  # type: ignore
+        self._post_mentioned = check_optional(builder._post_mentioned, "post_mentioned", str)  # type: ignore
+        self._voice = check_optional(builder._voice, "voice", Voice)  # type: ignore
         check_that(
-            builder._content is not None or builder._voice is not None, # type: ignore
+            builder._content is not None or builder._voice is not None,  # type: ignore
             "Tao update must contain a post or a voice",
         )
-        self._chat_name = check_required(builder._chat_name, "chat_name", str) # type: ignore
-        self._timestamp = check_required(builder._timestamp, "timestamp", int) # type: ignore
+        self._chat_name = check_required(builder._chat_name, "chat_name", str)  # type: ignore
+        self._timestamp = check_required(builder._timestamp, "timestamp", int)  # type: ignore
         self._is_reply_to_bot = check_required(
-            builder._is_reply_to_bot, "is_reply_to_bot", bool # type: ignore
+            builder._is_reply_to_bot, "is_reply_to_bot", bool  # type: ignore
         )
-        self._is_dm_to_bot = check_required(builder._is_dm_to_bot, "is_dm_to_bot", bool) # type: ignore
+        self._is_dm_to_bot = check_required(builder._is_dm_to_bot, "is_dm_to_bot", bool)  # type: ignore
         self._is_chat_mention_of_bot = check_required(
-            builder._is_chat_mention_of_bot, "is_chat_mention_of_bot", bool # type: ignore
+            builder._is_chat_mention_of_bot, "is_chat_mention_of_bot", bool  # type: ignore
         )
+        self._ref = check_optional(builder._ref, "ref", str)  # type: ignore
 
     @staticmethod
     def new() -> "TaoBotUpdate.Builder":
@@ -99,10 +105,10 @@ class TaoBotUpdate:
 
     def content(self) -> str:
         return self._content
-    
+
     def content_type(self) -> Optional[str]:
         return self._content_type
-    
+
     def post_mentioned(self) -> Optional[str]:
         return self._post_mentioned
 
@@ -123,3 +129,6 @@ class TaoBotUpdate:
 
     def is_chat_mention_of_bot(self) -> bool:
         return self._is_chat_mention_of_bot
+
+    def ref(self) -> Optional[str]:
+        return self._ref

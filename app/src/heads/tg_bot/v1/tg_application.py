@@ -12,12 +12,14 @@ from app.src.butter.checks import check_required
 from app.src.butter.clock import timestamp_now
 from app.src.butter.functional import first_present
 from app.src.gpt.chatform_message import ChatformMessage
+from app.src.gpt.simple_image_text_completer import SimpleImageTextCompleter
 from app.src.heads.tg_bot.v1.error_handler import error_handler
 from app.src.heads.tg_bot.v1.tg_bot_wrapper import TgBotWrapper
 from app.src.heads.tg_bot.v1.tg_content_downloader import TgContentDownloader
 from app.src.internal.audio.audio_file import AudioFile
 from app.src.internal.audio.audio_transcriptor import AudioTranscriptor
 from app.src.internal.audio.ogg_wav_converter import OgaWavConverter
+from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.heads.tg_bot.v1.tg_voice import TgVoice
 from app.src.heads.tg_bot.v1.typing_action import TypingAction
@@ -121,48 +123,27 @@ class TgApplication:
         self._tg_bot: TgBotWrapper = TgBotWrapper(self._application.bot)
         self._openai_token = check_required(openai_token, "openai_token", str)
 
-    async def _extract_image_if_present(self, message: Message) -> Optional[str]:
-        if len(message.photo) > 0:
-            imageId = message.photo[-1].file_id
-            # file = await self._tg_bot.get_file(imageId)
-            # return file.file_path
-            return imageId
-
     def to_tao_update(
         self,
         update: Update,
-        transcription: Optional[str] = None,
-        image_ref: Optional[str] = None,
-    ) -> TaoBotUpdate:
+    ) -> TaoBotUpdate.Builder:
         message: Message = check_required(update.message, "update.message", Message)
         username = extract_username(update)
-
-        content_type = "text"
-        content = message.text
-
-        if transcription is not None:
-            content = transcription
-        elif image_ref is not None:
-            content = image_ref
-            # TODO: add enums
-            content_type = "jpg"
 
         return (
             TaoBotUpdate.new()
             .chat_id(extract_chat_id(update))
             .from_user(username)
             .chat_name(message.chat.effective_name)
-            .content(check_required(content, "content", str))
-            .content_type(content_type)
+            .content(message.text)  # type: ignore
+            .content_type("text")
             .post_mentioned(_post_mentioned(message))
             .timestamp(timestamp_now())
             .is_reply_to_bot(is_reply_to_bot(message, self._bot.bot_username()))
             .is_dm_to_bot(is_direct_message(message))
             .is_chat_mention_of_bot(
                 is_chat_mention_of_bot(message, self._bot.bot_username())
-                or contains_bot_name(transcription, self._bot.bot_mention_names())
             )
-            .build()
         )
 
     def start(self):
@@ -190,16 +171,37 @@ class TgApplication:
             # TODO: move the downloading/trascription logic to the TaoBot
             #       and just pass the update containing content_type and url to the bot
             if update.message.voice is not None:
-                ogg_file: AudioFile = await TgContentDownloader(self._tg_bot.token()).adownload(
-                    update.message.voice.file_id
-                )
+                ogg_file: AudioFile = await TgContentDownloader(
+                    self._tg_bot.token()
+                ).download(update.message.voice.file_id)
                 transcription = await TgVoice(
                     AudioTranscriptor(self._openai_token), OgaWavConverter()
                 ).transcribe(ogg_file)
-                tao_update = self.to_tao_update(update, transcription)
+                tao_update = (
+                    self.to_tao_update(update)
+                    .content(transcription)
+                    .is_chat_mention_of_bot(
+                        contains_bot_name(transcription, self._bot.bot_mention_names())
+                    )
+                    .build()
+                )
+            elif len(update.message.photo) > 0:
+                image_ref = update.message.photo[-1].file_id
+                image: Image = await TgContentDownloader(self._tg_bot.token()).download(
+                    image_ref
+                )
+                description: str = await SimpleImageTextCompleter(
+                    "You make consise description of images.", self._openai_token
+                ).complete(image, "Describe in one sentence. Less than 10 words.")
+                tao_update = (
+                    self.to_tao_update(update)
+                    .content(description)
+                    .ref(image_ref)
+                    .content_type("jpg")
+                    .build()
+                )
             else:
-                image_ref = await self._extract_image_if_present(update.message)
-                tao_update = self.to_tao_update(update, None, image_ref)
+                tao_update = self.to_tao_update(update).build()
 
             commands_response: TaoBotCommandsResponse = self._commands.handle_command(
                 self._bot.bot_username(), tao_update
@@ -216,7 +218,9 @@ class TgApplication:
             if bot_response.reply_action is not None:
                 with TypingAction.show_typing(self._tg_bot, tao_update.chat_id()):
                     chat_message: ChatformMessage = await bot_response.reply_action()
-                    await safe_reply_markdown(update, check_required(chat_message.content(), "content", str))
+                    await safe_reply_markdown(
+                        update, check_required(chat_message.content(), "content", str)
+                    )
 
             if bot_response.postreply_action is not None:
                 await bot_response.postreply_action()
