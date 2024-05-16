@@ -1,4 +1,5 @@
 from typing import Any, List
+from app.src.butter.checks import check_required
 from app.src.gpt.chatform_message import ChatformMessage, system_message
 from app.src.observability.logger import Logger
 
@@ -28,7 +29,7 @@ class Chatform:
         return self
 
     def copy(self):
-        chatform = Chatform(self._system_prompt.content())
+        chatform = Chatform(check_required(self._system_prompt.content(), "system_prompt", str))
         chatform._messages = self._messages.copy()
         return chatform
 

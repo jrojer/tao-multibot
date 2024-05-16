@@ -150,7 +150,7 @@ class ChatformMessage:
             ROLE,
             [SYSTEM, USER, ASSISTANT, FUNCTION],
         )
-        self._content = check_required(builder._content, CONTENT, str) # type: ignore
+        self._content = check_optional(builder._content, CONTENT, str) # type: ignore
         self._name = _safe_format_username(check_optional(builder._name, NAME, str)) # type: ignore
         self._function_call = check_optional(
             builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall # type: ignore
@@ -163,7 +163,7 @@ class ChatformMessage:
     def role(self) -> str:
         return self._role
 
-    def content(self) -> str:
+    def content(self) -> Optional[str]:
         return self._content
 
     def name(self) -> Optional[str]:

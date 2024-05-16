@@ -1,4 +1,3 @@
-import random
 from typing import Optional
 from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
@@ -20,8 +19,10 @@ from app.src.gpt.chatform_message import (
     user_message,
 )
 from app.src.gpt.gpt_gateway import GptGateway
+from app.src.internal.common.content_downloader import ContentDownloader
 from app.src.observability.logger import Logger
 from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
+from app.src.plugins.image_reader.image_reader_plugin import ImageReaderPlugin
 
 
 logger = Logger(__name__)
@@ -47,17 +48,10 @@ def _should_reply(update: TaoBotUpdate):
     ) and (update.content_type() == "text")
 
 
-def _random_alphanumeric(length: int) -> str:
-    alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
-    return "".join(random.choices(alphabet, k=length))
-
-
 def _a_chat_messasge_from(update: TaoBotUpdate, bot_username: str) -> ChatMessage:
     content_type = ContentType.TEXT
-    ref = None
     if update.content_type() == "jpg":
         content_type = ContentType.JPG
-        ref = _random_alphanumeric(5)
 
     message = (
         ChatMessage.new()
@@ -70,23 +64,9 @@ def _a_chat_messasge_from(update: TaoBotUpdate, bot_username: str) -> ChatMessag
         .role(Role.USER)
         .added_by(bot_username)
         .reply_to(update.post_mentioned())
-        .ref(ref)
         .build()
     )
     return message
-
-
-def _report_usage(usage: ChatformMessage.Usage, update: TaoBotUpdate):
-    metrics.write(
-        measurement="usage",
-        tags={
-            "bot": update.from_user(),
-            "chat": update.chat_name(),
-            "chat_id": update.chat_id(),
-            "user": update.from_user(),
-        },
-        fields={"usage": str(usage.completion_tokens() + usage.prompt_tokens())},
-    )
 
 
 class TaoBot:
@@ -95,12 +75,18 @@ class TaoBot:
         messages_repo: ChatMessagesRepository,
         gateway: GptGateway,
         config: TaoBotConf,
+        gpt_token: str,
+        content_downloader: ContentDownloader,
     ) -> None:
         self._messages_repo: ChatMessagesRepository = check_required(
             messages_repo, "chat_messages_repo", ChatMessagesRepository
         )
         self._gateway: GptGateway = check_required(gateway, "gpt_gateway", GptGateway)
         self._conf: TaoBotConf = check_required(config, "config", TaoBotConf)
+        self._content_downloader: ContentDownloader = check_required(
+            content_downloader, "content_downloader", ContentDownloader
+        )
+        self._gpt_token: str = check_required(gpt_token, "gpt_token", str)
 
     def bot_username(self) -> str:
         return self._conf.username()
@@ -145,13 +131,29 @@ class TaoBot:
                             str(
                                 {
                                     "user": m.user(),
-                                    "image": m.ref(),
+                                    "ref": m.content(),
                                 }
                             ),
                         )
                     )
                 chatform.add_message(user_message(content, m.user()))
         return chatform
+
+    def _report_usage(
+        self, usage: Optional[ChatformMessage.Usage], update: TaoBotUpdate
+    ):
+        if usage is None:
+            return
+        metrics.write(
+            measurement="usage",
+            tags={
+                "bot": self.bot_username(),
+                "chat": update.chat_name(),
+                "chat_id": update.chat_id(),
+                "user": update.from_user(),
+            },
+            fields={"usage": str(usage.completion_tokens() + usage.prompt_tokens())},
+        )
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
         check_that(
@@ -178,18 +180,23 @@ class TaoBot:
 
             reply_message: ChatformMessage = await self._gateway.forward(
                 chatform,
-                [],
+                [
+                    ImageReaderPlugin(
+                        self._content_downloader,
+                        self._conf.system_prompt(),
+                        self._gpt_token,
+                    )
+                ],
             )
 
-            if reply_message.usage() is not None:
-                _report_usage(
-                    reply_message.usage(),  # type: ignore
-                    update,
-                )
+            self._report_usage(
+                reply_message.usage(),
+                update,
+            )
 
             bot_message = (
                 ChatMessage.new()
-                .content(reply_message.content())
+                .content(check_required(reply_message.content(), "content", str))
                 .content_type(ContentType.TEXT)
                 .user(self.bot_username())
                 .chat(update.chat_id())

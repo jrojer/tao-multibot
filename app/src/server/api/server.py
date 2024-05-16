@@ -69,4 +69,5 @@ class Server:
 
         p = multiprocessing.Process(target=target, name="server")
         p.start()
+        logger.info(f"Server started on port {self._port}")
         return p

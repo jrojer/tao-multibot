@@ -20,6 +20,7 @@ from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.gpt.openai_gpt_completer import OpenaiGptCompleter
 from app.src.heads.tg_bot.v1.tg_application import TgApplication
+from app.src.heads.tg_bot.v1.tg_content_downloader import TgContentDownloader
 from app.src.observability.logger import Logger
 from app.src.server.api.conf_client import ConfClient
 from app.src.server.master_config.openai_conf_client import GptConfClient
@@ -56,7 +57,7 @@ class TgBotTarget:
             repo: ChatMessagesRepository = InMemoryChatMessagesRepository()
         gpt_completer: GptCompleter = OpenaiGptCompleter(gpt_conf)
         gpt_gateway: GptGateway = GptGateway(gpt_completer)
-        tao_bot: TaoBot = TaoBot(repo, gpt_gateway, tao_bot_conf)
+        tao_bot: TaoBot = TaoBot(repo, gpt_gateway, tao_bot_conf, gpt_conf.token(), TgContentDownloader(self._telegram_token))
         bot_commands: TaoBotCommands = TaoBotCommands(
             self._conf_client, tao_bot_conf, gpt_conf
         )

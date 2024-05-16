@@ -70,8 +70,6 @@ class TaoBotCommands:
         )
 
     def _is_command_for(self, bot_username: str, update: TaoBotUpdate) -> bool:
-        if update.content() is None:
-            return False
         for cmd in self._commands().keys():
             if update.content().startswith(_command(bot_username, cmd)):
                 return True

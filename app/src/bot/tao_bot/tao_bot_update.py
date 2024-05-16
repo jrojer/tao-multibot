@@ -26,11 +26,12 @@ class TaoBotUpdate:
             self._from_user = from_user
             return self
 
-        def content(self, post: Optional[str]):
+        def content(self, post: str):
             self._content = post
             return self
         
-        def content_type(self, content_type: Optional[str]):
+        # TODO: make enum
+        def content_type(self, content_type: str):
             self._content_type = content_type
             return self
         
@@ -68,8 +69,8 @@ class TaoBotUpdate:
     def __init__(self, builder: Builder):
         self._chat_id = check_required(builder._chat_id, "chat_id", str) # type: ignore
         self._from_user = check_required(builder._from_user, "from_user", str) # type: ignore
-        self._content = check_optional(builder._content, "post", str) # type: ignore
-        self._content_type = check_optional(builder._content_type, "content_type", str) # type: ignore
+        self._content = check_required(builder._content, "post", str) # type: ignore
+        self._content_type = check_required(builder._content_type, "content_type", str) # type: ignore
         self._post_mentioned = check_optional(builder._post_mentioned, "post_mentioned", str) # type: ignore
         self._voice = check_optional(builder._voice, "voice", Voice) # type: ignore
         check_that(
@@ -96,13 +97,13 @@ class TaoBotUpdate:
     def from_user(self) -> str:
         return self._from_user
 
-    def content(self):
+    def content(self) -> str:
         return self._content
     
-    def content_type(self):
+    def content_type(self) -> Optional[str]:
         return self._content_type
     
-    def post_mentioned(self):
+    def post_mentioned(self) -> Optional[str]:
         return self._post_mentioned
 
     def voice(self) -> Optional[Voice]:
@@ -114,11 +115,11 @@ class TaoBotUpdate:
     def timestamp(self) -> int:
         return self._timestamp
 
-    def is_reply_to_bot(self):
+    def is_reply_to_bot(self) -> bool:
         return self._is_reply_to_bot
 
-    def is_dm_to_bot(self):
+    def is_dm_to_bot(self) -> bool:
         return self._is_dm_to_bot
 
-    def is_chat_mention_of_bot(self):
+    def is_chat_mention_of_bot(self) -> bool:
         return self._is_chat_mention_of_bot

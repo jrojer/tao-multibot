@@ -24,9 +24,7 @@ class GptGateway:
         plugins: List[Plugin] = [],
     ) -> ChatformMessage:
         manifests: list[dict[str, Any]] = [
-            function["manifest"] 
-            for p in plugins 
-            for function in p.functions()
+            function["manifest"] for p in plugins for function in p.functions()
         ]
         plugin_by_function_name = {
             function["manifest"]["name"]: p
@@ -47,18 +45,16 @@ class GptGateway:
             chatform.add_message(response_message)
             logger.info("Calling function: %s", function_call.name())
 
-            params = (
-                Plugin.CallParams.new()
-                .function_name(function_call.name())
-                .arguments_json(function_call.arguments())
-                .build()
-            )
-
             plugin: Plugin = plugin_by_function_name[function_call.name()]
 
-            result = plugin.call(params)
+            result: str = plugin.call(function_call.name(), function_call.arguments())
 
-            chatform.add_message(function_result_message(function_call.name(), result))
+            result_message: ChatformMessage = function_result_message(function_call.name(), result)
+
+            if plugin.is_delegate():
+                return result_message
+
+            chatform.add_message(result_message)
 
             response_message = await self._gpt_completer.complete(chatform, manifests)
 

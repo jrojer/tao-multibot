@@ -1,3 +1,4 @@
+import traceback
 from telegram.error import NetworkError
 from telegram.ext import ContextTypes
 
@@ -9,3 +10,6 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     """Log Errors caused by Updates."""
     if type(context.error) == NetworkError:
         logger.error("Network error occurred. Retrying to connect...")
+    else:
+        trace = traceback.format_exc()
+        logger.error(f"\"{context.error}\" traceback: {trace}")

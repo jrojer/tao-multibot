@@ -5,11 +5,14 @@ from app.src import env
 from app.src.butter.checks import check_required, check_that
 
 
+OGA = ".oga"
+WAV = ".wav"
+
 class AudioFile:
     @staticmethod
     def from_bytes(data: bytes, ext: str) -> "AudioFile":
         check_required(data, "data", bytes)
-        check_that(ext in [".ogg", ".wav"], f"ext is not .ogg or .wav")
+        check_that(ext in [OGA, ".wav"], f"ext is not {OGA} or {WAV}")
         new_audio_file = AudioFile()
         new_audio_file._path = env.TMP_DIR() / "{name}{ext}".format(
             name=uuid4(),
@@ -25,14 +28,14 @@ class AudioFile:
         check_required(path, "path", Path)
         check_that(path.exists(), f"file {path} does not exist")
         check_that(path.stat().st_size > 0, f"file {path} is empty")
-        check_that(path.suffix in [".ogg", ".wav"], f"file {path} is not ogg or wav")
+        check_that(path.suffix in [OGA, WAV], f"file {path} is not {OGA} or {WAV}")
         new_audio_file = AudioFile()
         new_audio_file._path = path
         return new_audio_file
 
     @staticmethod
     def create_empty_file(ext: str) -> Path:
-        check_that(ext in [".ogg", ".wav"], f"ext is not .ogg or .wav")
+        check_that(ext in [OGA, WAV], f"ext is not {OGA} or {WAV}")
         path = env.TMP_DIR() / "{name}{ext}".format(
             name=uuid4(),
             ext=ext,
@@ -46,10 +49,10 @@ class AudioFile:
         self._path: Path = None  # type: ignore
 
     def is_wav(self) -> bool:
-        return self._path.suffix == ".wav"
+        return self._path.suffix == WAV
 
     def is_ogg(self) -> bool:
-        return self._path.suffix == ".ogg"
+        return self._path.suffix == OGA
 
     def path(self) -> Path:
         return self._path

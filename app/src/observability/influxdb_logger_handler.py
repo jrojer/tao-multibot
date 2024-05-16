@@ -17,6 +17,14 @@ class InfluxDbLoggerHandler(Handler):
     def emit(self, record):
         if not env.INFLUXDB_ENABLED():
             return
+
+        message = record.message
+        traceback = None
+        if record.levelname == "ERROR":
+            if "traceback: " in record.message:
+                split = record.message.split("traceback: ")
+                message = split[0]
+                traceback = split[1]
         try:
             self.metrics_client.write(
                 "logs",
@@ -25,8 +33,9 @@ class InfluxDbLoggerHandler(Handler):
                     "level": record.levelname,
                     "package": record.name,
                     "process": record.processName,
+                    "traceback": traceback,
                 },
-                {"message": record.message},
+                {"message": message},
             )
         except Exception:
             return

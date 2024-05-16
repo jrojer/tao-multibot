@@ -47,8 +47,8 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     def add(self, message: ChatMessage) -> str:
         cursor = self._conn.cursor()
         sql = f"""
-            INSERT INTO {TABLE_NAME} ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to", "ref")
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO {TABLE_NAME} ("id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to")
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ;
         """
         new_id = str(uuid4())
@@ -67,7 +67,7 @@ class PostgresChatMessagesRepository(ChatMessagesRepository):
     ) -> List[ChatMessage]:
         cursor = self._conn.cursor()
         sql = f"""
-            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to", "ref"
+            SELECT "id", "timestamp", "content", "content_type", "user", "chat", "source", "role", "added_by", "reply_to"
             FROM {TABLE_NAME}
             WHERE "chat" = %s and "added_by" = %s
             ORDER BY "timestamp" DESC
@@ -91,7 +91,6 @@ def _from_record(r: tuple[Any, ...]) -> ChatMessage:
         .role(Role.from_str(r[7]))
         .added_by(r[8])
         .reply_to(r[9])
-        .ref(r[10])
         .build()
     )
 
@@ -108,5 +107,4 @@ def _to_record(m: ChatMessage, id: str) -> tuple[Optional[str], ...]:
         m.role().value,
         m.added_by(),
         m.reply_to(),
-        m.ref(),
     )

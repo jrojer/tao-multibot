@@ -22,7 +22,6 @@ class ChatMessage:
             self._role = None
             self._added_by = None
             self._reply_to = None
-            self._ref = None
 
         def id(self, id: str) -> "ChatMessage.Builder":
             self._id = id
@@ -60,14 +59,10 @@ class ChatMessage:
             self._added_by = added_by
             return self
 
-        def reply_to(self, reply_to: str) -> "ChatMessage.Builder":
+        def reply_to(self, reply_to: Optional[str]) -> "ChatMessage.Builder":
             self._reply_to = reply_to
             return self
         
-        def ref(self, ref: Optional[str]) -> "ChatMessage.Builder":
-            self._ref = ref
-            return self
-
         def build(self):
             return ChatMessage(self)
 
@@ -88,7 +83,6 @@ class ChatMessage:
         self._role = check_required(builder._role, "role", str)  # type: ignore
         self._added_by = check_required(builder._added_by, "added_by", str)  # type: ignore
         self._reply_to = check_optional(builder._reply_to, "reply_to", str)  # type: ignore
-        self._ref = check_optional(builder._ref, "ref", str) # type: ignore
 
     def id(self) -> str:
         return self._id
@@ -120,9 +114,6 @@ class ChatMessage:
     def reply_to(self) -> Optional[str]:
         return self._reply_to
     
-    def ref(self) -> Optional[str]:
-        return self._ref
-
     def __repr__(self) -> str:
         return f"{timestamp_to_readable_datetime(self._timestamp)} {self._user}: {self._content}"
 
@@ -153,5 +144,4 @@ class ChatMessage:
             and self._role == other.role()
             and self._added_by == other.added_by()
             and self._reply_to == other.reply_to()
-            and self._ref == other.ref()
         )
