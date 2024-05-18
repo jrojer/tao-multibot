@@ -23,6 +23,7 @@ from app.src.internal.common.content_downloader import ContentDownloader
 from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
+
 # from app.src.plugins.image_reader.image_reader_plugin import ImageReaderPlugin
 
 
@@ -100,8 +101,7 @@ class TaoBot:
     def is_authorised(self, from_user: str, chat_id: Optional[str]):
         cfg = self._conf
         authorised = (
-            chat_id is not None
-            and chat_id == cfg.control_chat_id()
+            (chat_id is not None and chat_id == cfg.control_chat_id())
             or chat_id in cfg.chats()
             or from_user in cfg.users()
             or from_user in cfg.admins()
@@ -127,14 +127,16 @@ class TaoBot:
             if m.user() == self.bot_username():
                 chatform.add_message(assistant_message(content))
             elif m.content_type() == ContentType.JPG:
-                    # TODO: consider decreasing image resolution for old images (more than 1 hour old)
-                    image: Image = await self._content_downloader.download(check_required(m.ref(), "ref", str))
-                    chatform.add_message(
-                        image_message(
-                            image_url=f"data:image/jpeg;base64,{image.as_base64()}",
-                            name=m.user(),
-                        )
+                # TODO: consider decreasing image resolution for old images (more than 1 hour old)
+                image: Image = await self._content_downloader.download(
+                    check_required(m.ref(), "ref", str)
+                )
+                chatform.add_message(
+                    image_message(
+                        image_url=f"data:image/jpeg;base64,{image.as_base64()}",
+                        name=m.user(),
                     )
+                )
             else:
                 chatform.add_message(user_message(content, m.user()))
         return chatform

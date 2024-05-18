@@ -18,13 +18,17 @@ def main():
     runtime_manager = RuntimeManager(server_port, master_config)
     resources = Server(server_port, master_config, runtime_manager)
 
+    p = resources.start()
+
     def handler(signum, frame):  # type: ignore
         logger.info("Stopping all bots")
         runtime_manager.stop_all()
+        time.sleep(5)
+        logger.info("All bots are stopped")
+        p.terminate()
+        exit(0)
 
     signal.signal(signal.SIGINT, handler)  # type: ignore
-
-    p = resources.start()
 
     # wait for the server to start
     time.sleep(5)
@@ -38,4 +42,5 @@ def main():
             schemas=env.POSTGRES_SCHEMAS(),
         ).migrate()
     runtime_manager.start_all()
+
     p.join()
