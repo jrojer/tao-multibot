@@ -1,6 +1,7 @@
 import base64
 from pathlib import Path
 
+JPG = ".jpg"
 
 class Image:
     def __init__(self):

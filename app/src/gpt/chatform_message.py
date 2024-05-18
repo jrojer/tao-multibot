@@ -7,6 +7,7 @@ from app.src.butter.checks import (
 )
 import unicodedata
 
+from app.src.gpt.content_type import ContentType
 from app.src.gpt.tokeniser import Tokeniser
 
 
@@ -66,10 +67,10 @@ class ChatformMessage:
 
         def __init__(self, builder: Builder):
             self._completion_tokens = check_required(
-                builder._completion_tokens, COMPLETION_TOKENS, int # type: ignore
+                builder._completion_tokens, COMPLETION_TOKENS, int  # type: ignore
             )
             self._prompt_tokens = check_required(
-                builder._prompt_tokens, PROMPT_TOKENS, int # type: ignore
+                builder._prompt_tokens, PROMPT_TOKENS, int  # type: ignore
             )
 
         def completion_tokens(self) -> int:
@@ -98,8 +99,8 @@ class ChatformMessage:
                 return ChatformMessage.FunctionCall(self)
 
         def __init__(self, builder: Builder):
-            self._name = check_required(builder._name, FUNCTION_NAME, str) # type: ignore
-            self._arguments = check_required(builder._arguments, ARGUMENTS, str) # type: ignore
+            self._name = check_required(builder._name, FUNCTION_NAME, str)  # type: ignore
+            self._arguments = check_required(builder._arguments, ARGUMENTS, str)  # type: ignore
 
         def name(self) -> str:
             return self._name
@@ -115,11 +116,12 @@ class ChatformMessage:
 
     class Builder:
         def __init__(self):
-            self._role: Optional[str] = None
-            self._content: Optional[str] = None
-            self._name: Optional[str] = None
-            self._function_call: Optional["ChatformMessage.FunctionCall"] = None
-            self._usage: Optional["ChatformMessage.Usage"] = None
+            self._role = None
+            self._content = None
+            self._content_type = None
+            self._name = None
+            self._function_call = None
+            self._usage = None
 
         def role(self, role: str) -> "ChatformMessage.Builder":
             self._role = role
@@ -129,11 +131,17 @@ class ChatformMessage:
             self._content = content
             return self
 
+        def content_type(self, content_type: ContentType) -> "ChatformMessage.Builder":
+            self._content_type = content_type
+            return self
+
         def name(self, name: Optional[str]) -> "ChatformMessage.Builder":
             self._name = name
             return self
 
-        def function_call(self, function_call: "ChatformMessage.FunctionCall") -> "ChatformMessage.Builder":
+        def function_call(
+            self, function_call: "ChatformMessage.FunctionCall"
+        ) -> "ChatformMessage.Builder":
             self._function_call = function_call
             return self
 
@@ -146,25 +154,30 @@ class ChatformMessage:
 
     def __init__(self, builder: Builder):
         self._role = check_one_of(
-            check_required(builder._role, ROLE, str), # type: ignore
+            check_required(builder._role, ROLE, str),  # type: ignore
             ROLE,
             [SYSTEM, USER, ASSISTANT, FUNCTION],
         )
-        self._content = check_optional(builder._content, CONTENT, str) # type: ignore
-        self._name = _safe_format_username(check_optional(builder._name, NAME, str)) # type: ignore
+        self._content = check_optional(builder._content, CONTENT, str)  # type: ignore
+        if self._content is not None:
+            self._content_type = check_required(builder._content_type, "content_type", ContentType)  # type: ignore
+        self._name = _safe_format_username(check_optional(builder._name, NAME, str))  # type: ignore
         self._function_call = check_optional(
-            builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall # type: ignore
+            builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall  # type: ignore
         )
         check_any_present(
             [self._content, self._function_call], [CONTENT, FUNCTION_CALL]
         )
-        self._usage = check_optional(builder._usage, USAGE, ChatformMessage.Usage) # type: ignore
+        self._usage = check_optional(builder._usage, USAGE, ChatformMessage.Usage)  # type: ignore
 
     def role(self) -> str:
         return self._role
 
     def content(self) -> Optional[str]:
         return self._content
+
+    def content_type(self) -> Optional[ContentType]:
+        return self._content_type
 
     def name(self) -> Optional[str]:
         return self._name
@@ -176,10 +189,23 @@ class ChatformMessage:
         return self._usage
 
     def to_dict(self) -> dict[str, Any]:
-        d = {
-            ROLE: self._role, 
-            CONTENT: self._content
-        }
+        # fmt: off
+        if self._content_type == ContentType.IMAGE:
+            content = [{
+                "type": "image_url",
+                "image_url": {
+                    "url": self._content
+                }
+            }]
+        elif self._content_type == ContentType.TEXT:
+            content = [{
+                "type": "text",
+                "text": self._content
+            }]
+        else:
+            content = None
+        # fmt: on
+        d = {ROLE: self._role, CONTENT: content}
         if self._name is not None:
             d[NAME] = self._name
         if self._function_call is not None:
@@ -193,6 +219,7 @@ class ChatformMessage:
             ChatformMessage.Builder()
             .role(d[ROLE])
             .content(d[CONTENT])
+            .content_type(ContentType.TEXT)
             .name(d.get(NAME))
         )
         if FUNCTION_CALL in d:
@@ -216,7 +243,7 @@ class ChatformMessage:
             size = 0
             for _, v in d.items():
                 if isinstance(v, dict):
-                    size += size_d(v) # type: ignore
+                    size += size_d(v)  # type: ignore
                 else:
                     size += tokeniser.num_tokens(str(v))
             return size
@@ -233,15 +260,34 @@ def chatform_message() -> ChatformMessage.Builder:
 
 
 def user_message(content: str, name: Optional[str] = None) -> ChatformMessage:
-    return chatform_message().role(USER).name(name).content(content).build()
+    return (
+        chatform_message()
+        .role(USER)
+        .name(name)
+        .content(content)
+        .content_type(ContentType.TEXT)
+        .build()
+    )
 
 
 def assistant_message(content: str) -> ChatformMessage:
-    return chatform_message().role(ASSISTANT).content(content).build()
+    return (
+        chatform_message()
+        .role(ASSISTANT)
+        .content(content)
+        .content_type(ContentType.TEXT)
+        .build()
+    )
 
 
 def system_message(content: str) -> ChatformMessage:
-    return chatform_message().role(SYSTEM).content(content).build()
+    return (
+        chatform_message()
+        .role(SYSTEM)
+        .content(content)
+        .content_type(ContentType.TEXT)
+        .build()
+    )
 
 
 def function_call_message(name: str, arguments: str) -> ChatformMessage:
@@ -254,4 +300,22 @@ def function_call_message(name: str, arguments: str) -> ChatformMessage:
 
 
 def function_result_message(name: str, content: str) -> ChatformMessage:
-    return chatform_message().role(FUNCTION).name(name).content(content).build()
+    return (
+        chatform_message()
+        .role(FUNCTION)
+        .name(name)
+        .content(content)
+        .content_type(ContentType.TEXT)
+        .build()
+    )
+
+
+def image_message(image_url: str, name: str) -> ChatformMessage:
+    return (
+        chatform_message()
+        .role(USER)
+        .name(name)
+        .content(image_url)
+        .content_type(ContentType.IMAGE)
+        .build()
+    )

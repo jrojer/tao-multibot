@@ -39,7 +39,7 @@ class OpenaiGptCompleter(GptCompleter):
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                "https://api.openai.com/v1/chat/completions",
+                cfg.url(),
                 json=kwargs,
                 headers={
                     "Content-Type": "application/json",

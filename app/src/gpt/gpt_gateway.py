@@ -14,7 +14,7 @@ class GptGateway:
     MAX_NUM_OF_FUNCTION_CALLS = 20
 
     def __init__(self, gpt_completer: GptCompleter):
-        self._gpt_completer = check_required(
+        self._gpt_completer: GptCompleter = check_required(
             gpt_completer, "gpt_completer", GptCompleter
         )
 

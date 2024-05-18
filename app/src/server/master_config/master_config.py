@@ -78,6 +78,7 @@ class MasterConfig:
                 "bot_mention_names": tc["bot_mention_names"],
             },
             "gpt": {
+                "url": gc["url"],
                 "token": gc["token"],
                 "model": gc["model"],
                 "temperature": gc["temperature"],

@@ -3,7 +3,7 @@ import aiohttp
 from app.src.internal.audio.audio_file import OGA, AudioFile
 from app.src.butter.checks import check_required
 from app.src.internal.common.content_downloader import ContentDownloader
-from app.src.internal.image.image import Image
+from app.src.internal.image.image import JPG, Image
 
 _URL = "https://api.telegram.org/bot{bot_token}/getFile?file_id={ref}"
 _DOWNLOAD_URL = "https://api.telegram.org/file/bot{bot_token}/{file_path}"
@@ -15,9 +15,9 @@ class TgContentDownloader(ContentDownloader):
 
     @staticmethod
     def _construct_object(data: Any, url: str) -> Any:
-        if url.endswith(".jpg"):
-            return Image.from_bytes(data, ".jpg")
-        if url.endswith(OGA):
+        if "/photos/" in url:
+            return Image.from_bytes(data, JPG)
+        if "/voice/" in url:
             return AudioFile.from_bytes(data, OGA)
         raise ValueError(f"Unsupported file type")
 

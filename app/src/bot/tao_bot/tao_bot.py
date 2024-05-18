@@ -15,14 +15,15 @@ from app.src.gpt.chatform import Chatform
 from app.src.gpt.chatform_message import (
     ChatformMessage,
     assistant_message,
-    function_result_message,
+    image_message,
     user_message,
 )
 from app.src.gpt.gpt_gateway import GptGateway
 from app.src.internal.common.content_downloader import ContentDownloader
+from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
-from app.src.plugins.image_reader.image_reader_plugin import ImageReaderPlugin
+# from app.src.plugins.image_reader.image_reader_plugin import ImageReaderPlugin
 
 
 logger = Logger(__name__)
@@ -111,7 +112,7 @@ class TaoBot:
             )
         return authorised
 
-    def _build_chatform(self, chat_id: str) -> Chatform:
+    async def _build_chatform(self, chat_id: str) -> Chatform:
         system_prompt = self._conf.system_prompt()
         chatform = Chatform(system_prompt)
         messages = self._messages_repo.fetch_last_messages_by_chat_and_adder(
@@ -125,20 +126,16 @@ class TaoBot:
 
             if m.user() == self.bot_username():
                 chatform.add_message(assistant_message(content))
-            else:
-                if m.content_type() == ContentType.JPG:
+            elif m.content_type() == ContentType.JPG:
+                    # TODO: consider decreasing image resolution for old images (more than 1 hour old)
+                    image: Image = await self._content_downloader.download(check_required(m.ref(), "ref", str))
                     chatform.add_message(
-                        function_result_message(
-                            "image",
-                            str(
-                                {
-                                    "user": m.user(),
-                                    "content": m.content(),
-                                    "ref": m.ref(),
-                                }
-                            ),
+                        image_message(
+                            image_url=f"data:image/jpeg;base64,{image.as_base64()}",
+                            name=m.user(),
                         )
                     )
+            else:
                 chatform.add_message(user_message(content, m.user()))
         return chatform
 
@@ -175,7 +172,7 @@ class TaoBot:
         if not _should_reply(update):
             return reply(None, postreply_action)
 
-        chatform: Chatform = self._build_chatform(update.chat_id())
+        chatform: Chatform = await self._build_chatform(update.chat_id())
 
         # TODO: as process_incoming_update became async, consider simplifying this nested async
         async def reply_action() -> ChatformMessage:
@@ -184,11 +181,11 @@ class TaoBot:
             reply_message: ChatformMessage = await self._gateway.forward(
                 chatform,
                 [
-                    ImageReaderPlugin(
-                        self._content_downloader,
-                        self._conf.system_prompt(),
-                        self._gpt_token,
-                    )
+                    # ImageReaderPlugin(
+                    #     self._content_downloader,
+                    #     self._conf.system_prompt(),
+                    #     self._gpt_token,
+                    # )
                 ],
             )
 

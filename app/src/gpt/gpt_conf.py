@@ -30,3 +30,7 @@ class GptConf(ABC):
     @abstractmethod
     def token(self) -> str:
         pass
+
+    @abstractmethod
+    def url(self) -> str:
+        pass

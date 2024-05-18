@@ -12,14 +12,14 @@ from app.src.butter.checks import check_required
 from app.src.butter.clock import timestamp_now
 from app.src.butter.functional import first_present
 from app.src.gpt.chatform_message import ChatformMessage
-from app.src.gpt.simple_image_text_completer import SimpleImageTextCompleter
+# from app.src.gpt.simple_image_text_completer import SimpleImageTextCompleter
 from app.src.heads.tg_bot.v1.error_handler import error_handler
 from app.src.heads.tg_bot.v1.tg_bot_wrapper import TgBotWrapper
 from app.src.heads.tg_bot.v1.tg_content_downloader import TgContentDownloader
 from app.src.internal.audio.audio_file import AudioFile
 from app.src.internal.audio.audio_transcriptor import AudioTranscriptor
 from app.src.internal.audio.ogg_wav_converter import OgaWavConverter
-from app.src.internal.image.image import Image
+# from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.heads.tg_bot.v1.tg_voice import TgVoice
 from app.src.heads.tg_bot.v1.typing_action import TypingAction
@@ -187,12 +187,8 @@ class TgApplication:
                 )
             elif len(update.message.photo) > 0:
                 image_ref = update.message.photo[-1].file_id
-                image: Image = await TgContentDownloader(self._tg_bot.token()).download(
-                    image_ref
-                )
-                description: str = await SimpleImageTextCompleter(
-                    "You make consise description of images.", self._openai_token
-                ).complete(image, "Describe in one sentence. Less than 10 words.")
+                # TODO: consider making content field optional or putting ref in the content field
+                description = "An image"
                 tao_update = (
                     self.to_tao_update(update)
                     .content(description)
