@@ -57,7 +57,7 @@ class TgBotTarget:
             repo: ChatMessagesRepository = InMemoryChatMessagesRepository()
         gpt_completer: GptCompleter = OpenaiGptCompleter(gpt_conf)
         gpt_gateway: GptGateway = GptGateway(gpt_completer)
-        tao_bot: TaoBot = TaoBot(repo, gpt_gateway, tao_bot_conf, gpt_conf.token(), TgContentDownloader(self._telegram_token))
+        tao_bot: TaoBot = TaoBot(repo, gpt_gateway, tao_bot_conf, TgContentDownloader(self._telegram_token))
         bot_commands: TaoBotCommands = TaoBotCommands(
             self._conf_client, tao_bot_conf, gpt_conf
         )

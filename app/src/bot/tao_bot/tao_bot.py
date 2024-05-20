@@ -23,8 +23,7 @@ from app.src.internal.common.content_downloader import ContentDownloader
 from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
-
-# from app.src.plugins.image_reader.image_reader_plugin import ImageReaderPlugin
+from app.src.plugins.code_executor.code_executor_plugin import CodeExecutorPlugin
 
 
 logger = Logger(__name__)
@@ -79,7 +78,6 @@ class TaoBot:
         gateway: GptGateway,
         config: TaoBotConf,
         # TODO: revise dependencies
-        gpt_token: str,
         content_downloader: ContentDownloader,
     ) -> None:
         self._messages_repo: ChatMessagesRepository = check_required(
@@ -90,7 +88,6 @@ class TaoBot:
         self._content_downloader: ContentDownloader = check_required(
             content_downloader, "content_downloader", ContentDownloader
         )
-        self._gpt_token: str = check_required(gpt_token, "gpt_token", str)
 
     def bot_username(self) -> str:
         return self._conf.username()
@@ -183,11 +180,7 @@ class TaoBot:
             reply_message: ChatformMessage = await self._gateway.forward(
                 chatform,
                 [
-                    # ImageReaderPlugin(
-                    #     self._content_downloader,
-                    #     self._conf.system_prompt(),
-                    #     self._gpt_token,
-                    # )
+                    CodeExecutorPlugin(),
                 ],
             )
 

@@ -7,9 +7,10 @@ from app.src.observability.influxdb_logger_handler import InfluxDbLoggerHandler
 
 class NoiseRecordsFilter(logging.Filter):
     def filter(self, record: logging.LogRecord):
-        return not (
-            record.name in ["aiohttp.access", "httpx"] and record.levelname == "INFO"
-        )
+        # return not (
+        #     record.name in ["aiohttp.access", "httpx"] and record.levelname == "INFO"
+        # )
+        return True
 
 
 _fileHandler = logging.FileHandler(Path(env.LOG_DIR()) / ("app.log"))
@@ -27,6 +28,7 @@ logging.basicConfig(
     ],
 )
 
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 class Logger:
     def __init__(self, package_name: str):

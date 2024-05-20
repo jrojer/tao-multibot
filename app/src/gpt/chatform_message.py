@@ -161,6 +161,8 @@ class ChatformMessage:
         self._content = check_optional(builder._content, CONTENT, str)  # type: ignore
         if self._content is not None:
             self._content_type = check_required(builder._content_type, "content_type", ContentType)  # type: ignore
+        else:
+            self._content_type = None
         self._name = _safe_format_username(check_optional(builder._name, NAME, str))  # type: ignore
         self._function_call = check_optional(
             builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall  # type: ignore

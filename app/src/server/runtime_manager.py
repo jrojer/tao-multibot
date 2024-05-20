@@ -36,7 +36,7 @@ class RuntimeManager:
             self._state[bot_id] = (process, stop_event)
         else:
             raise NotImplementedError(
-                f"Bot type {bot_conf["type"]} is not supported"
+                f"Bot type {bot_conf['type']} is not supported"
             )
         
     def stop(self, bot_id: Optional[str]):
