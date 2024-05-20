@@ -29,6 +29,7 @@ logging.basicConfig(
 )
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
 
 class Logger:
     def __init__(self, package_name: str):

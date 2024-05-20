@@ -54,7 +54,11 @@ class CodeExecutorPlugin(Plugin):
             code = check_required(d.get("code"), "code", str)
         except Exception as e:
             logger.warning("Failed to parse args: %s", args, exc_info=e)
-            code = check_required(args, "code", str)
+            return json.dumps({
+                "message": "format: {\"code\": \"<python code>\"}",
+                "status": "failed",
+                "error": str(e),
+            })
 
         # NOTE: https://stackoverflow.com/questions/33908794/get-value-of-last-expression-in-exec-call
         script = f"""
@@ -87,6 +91,23 @@ if val is not None:
         with open(tmp_dir / "script.py", "w") as f:
             f.write(script)
 
+        image_name = "code_executor"
+
+        build_command = [
+            "docker",
+            "build",
+            "-t",
+            image_name,
+            str(Path(__file__).parent),
+        ]
+        p = subprocess.run(build_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if p.returncode != 0:
+            logger.error("Failed to build docker image: %s", p.stderr.decode())
+            return json.dumps({
+                "status": "failed",
+                "error": "Failed to build docker image",
+            })
+
         command = [
             "docker",
             "run",
@@ -95,7 +116,7 @@ if val is not None:
             container_name,
             "-v",
             f"{tmp_dir.absolute()}:/usr/src/app",
-            "python:3.11",
+            image_name,
             "python",
             "/usr/src/app/script.py",
         ]
@@ -123,21 +144,21 @@ if val is not None:
                 logger.info("stderr: %s", result["stderr"])
                 break
             elif time.time() - start_time > self._timeout_seconds:
-                subprocess.Popen(
+                subprocess.run(
                     [
                         "docker",
                         "stop",
                         container_name,
                      ]
-                ).communicate()
+                )
 
-                subprocess.Popen(
+                subprocess.run(
                     [
                         "docker",
                         "rm",
                         container_name,
                      ]
-                ).communicate()
+                )
                 
                 stdout, stderr = process.communicate()
                 result = {
