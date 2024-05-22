@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:2.7.6
+    restart: always
+    volumes:
+      - ./docker/db:/var/lib/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_TOKEN}
+      - DOCKER_INFLUXDB_INIT_ORG=org
+      - DOCKER_INFLUXDB_INIT_RETENTION=50w
+      - DOCKER_INFLUXDB_INIT_BUCKET=bucket
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
+    ports:
+      - '127.0.0.1:8086:8086'
+    networks:
+      - grafana_default
+
+networks:
+  grafana_default:
+    external: true
+

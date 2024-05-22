@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+       - ./docker/data:/var/lib/postgresql/data
+    ports:
+       - 0.0.0.0:5432:5432
+    restart: always

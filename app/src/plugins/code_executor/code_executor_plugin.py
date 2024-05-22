@@ -141,6 +141,8 @@ if val is not None:
                     "stdout": stdout.decode(),
                     "stderr": stderr.decode(),
                 }
+                # TODO: create message sender and use it in the success callback. 
+                #       The message sender should send message to chat and write into chat_messages database.
                 self._on_success(result["stdout"])
                 if len(result["stdout"]) == 0:
                     logger.warning("No output from code execution")

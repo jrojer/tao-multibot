@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  grafana:
+    image: grafana/grafana:10.2.2
+    restart: always
+    volumes:
+      - ./docker/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./docker/lib:/var/lib/grafana
+    ports:
+      - '127.0.0.1:3000:3000'
+

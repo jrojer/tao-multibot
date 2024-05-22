@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: a@a.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    volumes:
+       - ./docker/pgadmin:/var/lib/pgadmin
+    ports:
+      - 127.0.0.1:5050:80
+    restart: always
+    networks:
+      - postgres_default
+
+networks:
+  postgres_default:
+    external: true
