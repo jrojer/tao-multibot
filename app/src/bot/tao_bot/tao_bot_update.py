@@ -27,7 +27,7 @@ class TaoBotUpdate:
             self._from_user = from_user
             return self
 
-        def content(self, post: str):
+        def content(self, post: Optional[str]):
             self._content = post
             return self
 

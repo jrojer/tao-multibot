@@ -9,6 +9,7 @@ from app.src.butter.functional import or_else
 from uuid import uuid4
 
 
+# TODO: consider adding username to reply_to
 class ChatMessage:
     class Builder:
         def __init__(self):
@@ -80,7 +81,7 @@ class ChatMessage:
         self._timestamp = or_else(
             check_optional(builder._timestamp, "timestamp", int), timestamp_now  # type: ignore
         )
-        self._content = check_required(builder._content, "content", str)  # type: ignore
+        self._content = check_optional(builder._content, "content", str)  # type: ignore
         self._content_type = check_required(builder._content_type, "content_type", ContentType)  # type: ignore
         self._user = check_required(builder._user, "user", str)  # type: ignore
         self._chat = check_required(builder._chat, "chat", str)  # type: ignore
@@ -96,7 +97,7 @@ class ChatMessage:
     def timestamp(self) -> int:
         return self._timestamp
 
-    def content(self) -> str:
+    def content(self) -> Optional[str]:
         return self._content
 
     def content_type(self) -> ContentType:

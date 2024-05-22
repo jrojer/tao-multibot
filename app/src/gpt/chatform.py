@@ -16,6 +16,7 @@ SYSTEM_PROMPT = "system_prompt"
 # - add token length limit and remove oldest messages until the limit is satisfied.
 #   That has corner cases when a single message is longer than the limit.
 # - truncate all messages to the limit.
+# - consider summarisation strategies (however, this will require updating storage procedures as well)
 class Chatform:
     def __init__(
         self,

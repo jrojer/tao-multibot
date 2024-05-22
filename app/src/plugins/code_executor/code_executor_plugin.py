@@ -1,7 +1,7 @@
 import asyncio
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from app.src.butter.checks import check_optional, check_required, check_that
 from app.src.gpt.plugin import Plugin
 from app.src import env
@@ -17,9 +17,12 @@ logger = Logger(__name__)
 
 
 class CodeExecutorPlugin(Plugin):
-    def __init__(self, timeout_seconds: int = 120):
+    def __init__(self, timeout_seconds: int = 120, on_success: Callable[[str], None] = lambda s: None):
         self._timeout_seconds: int = check_required(
             timeout_seconds, "timeout_seconds", int
+        )
+        self._on_success: Callable[[str], None] = check_optional(
+            on_success, "on_success", Callable # type: ignore
         )
 
     def functions(self) -> list[dict[str, Any]]:
@@ -138,6 +141,7 @@ if val is not None:
                     "stdout": stdout.decode(),
                     "stderr": stderr.decode(),
                 }
+                self._on_success(result["stdout"])
                 if len(result["stdout"]) == 0:
                     logger.warning("No output from code execution")
                 logger.info("stdout: %s", result["stdout"])

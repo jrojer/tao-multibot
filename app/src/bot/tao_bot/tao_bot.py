@@ -118,11 +118,11 @@ class TaoBot:
         for m in messages:
             content = m.content()
 
-            if m.reply_to() is not None:
-                content = f"{content} (reply to: {m.reply_to()})"
+            if m.reply_to() is not None and content is not None:
+                content = f"{content} (Ref.: {m.reply_to()})"
 
             if m.user() == self.bot_username():
-                chatform.add_message(assistant_message(content))
+                chatform.add_message(assistant_message(check_required(content, "content", str)))
             elif m.content_type() == ContentType.JPG:
                 # TODO: consider decreasing image resolution for old images (more than 1 hour old)
                 image: Image = await self._content_downloader.download(
@@ -134,25 +134,29 @@ class TaoBot:
                         name=m.user(),
                     )
                 )
+                if content is not None:
+                    chatform.add_message(user_message(content, m.user()))
             else:
-                chatform.add_message(user_message(content, m.user()))
+                chatform.add_message(user_message(check_required(content, "content", str), m.user()))
         return chatform
 
     def _report_usage(
-        self, usage: Optional[ChatformMessage.Usage], update: TaoBotUpdate
+        self, messages: list[ChatformMessage], update: TaoBotUpdate
     ):
-        if usage is None:
-            return
-        metrics.write(
-            measurement="usage",
-            tags={
-                "bot": self.bot_username(),
-                "chat": update.chat_name(),
-                "chat_id": update.chat_id(),
-                "user": update.from_user(),
-            },
-            fields={"usage": str(usage.completion_tokens() + usage.prompt_tokens())},
-        )
+        for message in messages:
+            usage = message.usage()
+            if usage is None:
+                return
+            metrics.write(
+                measurement="usage",
+                tags={
+                    "bot": self.bot_username(),
+                    "chat": update.chat_name(),
+                    "chat_id": update.chat_id(),
+                    "user": update.from_user(),
+                },
+                fields={"usage": str(usage.completion_tokens() + usage.prompt_tokens())},
+            )
 
     async def process_incoming_update(self, update: TaoBotUpdate) -> TaoBotResponse:
         check_that(
@@ -177,17 +181,17 @@ class TaoBot:
         async def reply_action() -> ChatformMessage:
             _log_update(update, "Processing")
 
-            reply_message: ChatformMessage = await self._gateway.forward(
+            reply_messages: list[ChatformMessage] = await self._gateway.forward(
                 chatform,
-                [
-                    CodeExecutorPlugin(),
-                ],
+                [CodeExecutorPlugin()],
             )
 
             self._report_usage(
-                reply_message.usage(),
+                reply_messages,
                 update,
             )
+
+            reply_message = reply_messages[-1]
 
             bot_message = (
                 ChatMessage.new()

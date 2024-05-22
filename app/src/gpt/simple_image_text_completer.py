@@ -5,6 +5,7 @@ from app.src.butter.checks import check_optional
 from app.src.internal.image.image import Image
 
 
+# NOTE: DEPRECATED
 class SimpleImageTextCompleter:
     def __init__(self, system_prompt: str, token: str) -> None:
         self._system_prompt = system_prompt

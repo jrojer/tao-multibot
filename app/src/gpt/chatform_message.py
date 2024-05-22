@@ -73,6 +73,10 @@ class ChatformMessage:
                 builder._prompt_tokens, PROMPT_TOKENS, int  # type: ignore
             )
 
+        @staticmethod
+        def new() -> "ChatformMessage.Usage.Builder":
+            return ChatformMessage.Usage.Builder()
+
         def completion_tokens(self) -> int:
             return self._completion_tokens
 
@@ -251,6 +255,13 @@ class ChatformMessage:
             return size
 
         return size_d(self.to_dict())
+
+    def is_function_call_result(self) -> bool:
+        return (
+            self._role == FUNCTION
+            and self._name is not None
+            and self._content is not None
+        )
 
 
 def function_call() -> ChatformMessage.FunctionCall.Builder:

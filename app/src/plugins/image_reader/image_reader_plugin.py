@@ -12,7 +12,7 @@ from app.src.gpt.simple_image_text_completer import (
 
 logger = Logger(__name__)
 
-
+# NOTE: DEPRECATED as the chatform already supports images
 class ImageReaderPlugin(Plugin):
     def __init__(
         self,

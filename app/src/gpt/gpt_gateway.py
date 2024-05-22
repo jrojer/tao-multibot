@@ -22,7 +22,7 @@ class GptGateway:
         self,
         chatform: Chatform,
         plugins: List[Plugin] = [],
-    ) -> ChatformMessage:
+    ) -> list[ChatformMessage]:
         manifests: list[dict[str, Any]] = [
             function["manifest"] for p in plugins for function in p.functions()
         ]
@@ -32,9 +32,13 @@ class GptGateway:
             for function in p.functions()
         }
 
+        all_messages: list[ChatformMessage] = []
+
         response_message: ChatformMessage = await self._gpt_completer.complete(
             chatform, manifests
         )
+
+        all_messages.append(response_message)
 
         function_call: Optional[ChatformMessage.FunctionCall] = (
             response_message.function_call()
@@ -51,8 +55,10 @@ class GptGateway:
 
             result_message: ChatformMessage = function_result_message(function_call.name(), result)
 
+            all_messages.append(result_message)
+
             if plugin.is_delegate():
-                return result_message
+                return all_messages
 
             chatform.add_message(result_message)
 
@@ -63,4 +69,4 @@ class GptGateway:
             if num_of_function_calls >= GptGateway.MAX_NUM_OF_FUNCTION_CALLS:
                 raise RuntimeError("Max number of function calls exceeded.")
 
-        return response_message
+        return all_messages
