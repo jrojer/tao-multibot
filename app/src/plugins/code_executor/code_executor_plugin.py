@@ -1,7 +1,7 @@
 import asyncio
 import json
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Coroutine, Optional
 from app.src.butter.checks import check_optional, check_required, check_that
 from app.src.gpt.plugin import Plugin
 from app.src import env
@@ -15,15 +15,17 @@ from app.src.observability.logger import Logger
 
 logger = Logger(__name__)
 
+ASYNC_CALLBACK = Callable[[str], Coroutine[str, None, None]]
+
 
 class CodeExecutorPlugin(Plugin):
-    def __init__(self, timeout_seconds: int = 120, on_success: Callable[[str], None] = lambda s: None):
+    def __init__(
+        self, timeout_seconds: int = 120, on_success: Optional[ASYNC_CALLBACK] = None
+    ):
         self._timeout_seconds: int = check_required(
             timeout_seconds, "timeout_seconds", int
         )
-        self._on_success: Callable[[str], None] = check_optional(
-            on_success, "on_success", Callable # type: ignore
-        )
+        self._on_success: Optional[ASYNC_CALLBACK] = on_success
 
     def functions(self) -> list[dict[str, Any]]:
         return [
@@ -57,11 +59,13 @@ class CodeExecutorPlugin(Plugin):
             code = check_required(d.get("code"), "code", str)
         except Exception as e:
             logger.warning("Failed to parse args: %s", args, exc_info=e)
-            return json.dumps({
-                "message": "format: {\"code\": \"<python code>\"}",
-                "status": "failed",
-                "error": str(e),
-            })
+            return json.dumps(
+                {
+                    "message": 'format: {"code": "<python code>"}',
+                    "status": "failed",
+                    "error": str(e),
+                }
+            )
 
         # NOTE: https://stackoverflow.com/questions/33908794/get-value-of-last-expression-in-exec-call
         script = f"""
@@ -103,13 +107,17 @@ if val is not None:
             image_name,
             str(Path(__file__).parent),
         ]
-        p = subprocess.run(build_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(
+            build_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         if p.returncode != 0:
             logger.error("Failed to build docker image: %s", p.stderr.decode())
-            return json.dumps({
-                "status": "failed",
-                "error": "Failed to build docker image",
-            })
+            return json.dumps(
+                {
+                    "status": "failed",
+                    "error": "Failed to build docker image",
+                }
+            )
 
         command = [
             "docker",
@@ -141,9 +149,8 @@ if val is not None:
                     "stdout": stdout.decode(),
                     "stderr": stderr.decode(),
                 }
-                # TODO: create message sender and use it in the success callback. 
-                #       The message sender should send message to chat and write into chat_messages database.
-                self._on_success(result["stdout"])
+                if self._on_success is not None:
+                    await self._on_success(result["stdout"])
                 if len(result["stdout"]) == 0:
                     logger.warning("No output from code execution")
                 logger.info("stdout: %s", result["stdout"])
@@ -155,7 +162,7 @@ if val is not None:
                         "docker",
                         "stop",
                         container_name,
-                     ]
+                    ]
                 )
 
                 subprocess.run(
@@ -163,9 +170,9 @@ if val is not None:
                         "docker",
                         "rm",
                         container_name,
-                     ]
+                    ]
                 )
-                
+
                 stdout, stderr = process.communicate()
                 result = {
                     "status": "timeout",

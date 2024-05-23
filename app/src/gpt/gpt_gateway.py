@@ -64,6 +64,8 @@ class GptGateway:
 
             response_message = await self._gpt_completer.complete(chatform, manifests)
 
+            all_messages.append(response_message)
+
             function_call = response_message.function_call()
             num_of_function_calls += 1
             if num_of_function_calls >= GptGateway.MAX_NUM_OF_FUNCTION_CALLS:

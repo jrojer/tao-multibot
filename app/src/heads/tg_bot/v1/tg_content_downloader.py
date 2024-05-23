@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 import aiohttp
 from app.src.internal.audio.audio_file import OGA, AudioFile
 from app.src.butter.checks import check_required
@@ -14,7 +14,7 @@ class TgContentDownloader(ContentDownloader):
         self._tg_token = check_required(tg_token, "tg_token", str)
 
     @staticmethod
-    def _construct_object(data: Any, url: str) -> Any:
+    def _construct_object(data: Any, url: str) -> Union[Image, AudioFile]:
         if "/photos/" in url:
             return Image.from_bytes(data, JPG)
         if "/voice/" in url:
