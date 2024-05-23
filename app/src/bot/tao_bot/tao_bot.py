@@ -24,7 +24,7 @@ from app.src.internal.common.message_sender import MessageSender
 from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
-from app.src.plugins.code_executor.code_executor_plugin import CodeExecutorPlugin
+# from app.src.plugins.code_executor.code_executor_plugin import CodeExecutorPlugin
 
 
 logger = Logger(__name__)
@@ -190,12 +190,13 @@ class TaoBot:
         async def reply_action() -> ChatformMessage:
             _log_update(update, "Processing")
 
-            async def send_message(message: str):
-                await self._message_sender.send_text(update.chat_id(), message, username="function")
+            # async def send_message(message: str):
+                # await self._message_sender.send_text(update.chat_id(), message, username="function")
 
             reply_messages: list[ChatformMessage] = await self._gateway.forward(
                 chatform,
-                [CodeExecutorPlugin(on_success=send_message)],
+                # [CodeExecutorPlugin(on_success=send_message)],
+                [],
             )
 
             self._report_usage(
