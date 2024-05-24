@@ -122,3 +122,7 @@ python entrypoint.py
 ## Copilot notebook
 
 Copilot notebook contains code that builds a systemp prompt out of all project files. Using this prompt the GPT can help you write code components and tests.
+
+## Logical diagram
+
+![doc/logical_diagram.png](doc/logical_diagram.png)
