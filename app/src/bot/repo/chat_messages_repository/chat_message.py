@@ -33,7 +33,7 @@ class ChatMessage:
             self._timestamp = timestamp
             return self
 
-        def content(self, content: str) -> "ChatMessage.Builder":
+        def content(self, content: Optional[str]) -> "ChatMessage.Builder":
             self._content = content
             return self
 
