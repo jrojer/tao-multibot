@@ -79,6 +79,7 @@ class MasterConfig:
             },
             "gpt": {
                 "url": gc["url"],
+                "type": gc["type"],
                 "token": gc["token"],
                 "model": gc["model"],
                 "temperature": gc["temperature"],
