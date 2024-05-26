@@ -3,6 +3,7 @@ from telegram.ext import Application, MessageHandler, filters
 from telegram.ext import ContextTypes
 from telegram import Update, Message
 from telegram.error import BadRequest
+from app.src.bot.tao_bot.content_type import ContentType
 from app.src.bot.tao_bot.tao_bot import TaoBot
 from app.src.bot.tao_bot.tao_bot_commands import TaoBotCommands
 from app.src.bot.tao_bot.tao_bot_commands_response import TaoBotCommandsResponse
@@ -133,8 +134,8 @@ class TgApplication:
             .chat_id(extract_chat_id(update))
             .from_user(username)
             .chat_name(message.chat.effective_name)
-            .content(message.text)  # type: ignore
-            .content_type("text")
+            .content(message.text)
+            .content_type(ContentType.TEXT)
             .post_mentioned(_post_mentioned(message))
             .timestamp(timestamp_now())
             .is_reply_to_bot(is_reply_to_bot(message, self._bot.bot_username()))
@@ -189,8 +190,7 @@ class TgApplication:
                     self.to_tao_update(update)
                     .content(update.message.caption)
                     .ref(image_ref)
-                    # TODO consider renaming jpg to TG_IMAGE
-                    .content_type("jpg")
+                    .content_type(ContentType.IMAGE)
                     .build()
                 )
             else:

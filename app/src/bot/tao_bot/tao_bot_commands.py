@@ -1,5 +1,6 @@
 from app.src.bot.handlers.start_handler import get_start_handler
 from app.src.bot.handlers.update_access_handler import get_update_access_handler
+from app.src.bot.tao_bot.content_type import ContentType
 from app.src.bot.tao_bot.tao_bot_commands_response import (
     TaoBotCommandsResponse,
     ignore,
@@ -71,14 +72,16 @@ class TaoBotCommands:
 
     def _is_command_for(self, bot_username: str, update: TaoBotUpdate) -> bool:
         for cmd in self._commands().keys():
-            if update.content().startswith(_command(bot_username, cmd)):
-                return True
+            if update.content_type() == ContentType.TEXT:
+                content: str = check_required(update.content(), "content", str)
+                return content.startswith(_command(bot_username, cmd))
         return False
 
     def _run_command_for(self, bot_username: str, update: TaoBotUpdate) -> str:
         if not self._is_command_for(bot_username, update):
             raise AssertionError("Programmer error: unchecked command")
-        return self._commands()[_extract_cmd(update.content())](update)
+        content = check_required(update.content(), "content", str)
+        return self._commands()[_extract_cmd(content)](update)
 
     def handle_command(
         self, bot_username: str, tao_update: TaoBotUpdate

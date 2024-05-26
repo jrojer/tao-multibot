@@ -83,6 +83,9 @@ All is done, fire up the platform:
 python entrypoint.py
 ```
 
+* The app will use `"./var"` to store all files, including tmp files, logs, system prompts, etc.
+* To edit the system prompt refer to `./var/system_prompts/<bot name>` (it is created automatically if not present).
+
 ## Further steps
 
 * Set up `ffmpeg` for audio processing
@@ -119,3 +122,7 @@ python entrypoint.py
 ## Copilot notebook
 
 Copilot notebook contains code that builds a systemp prompt out of all project files. Using this prompt the GPT can help you write code components and tests.
+
+## Logical diagram
+
+![doc/logical_diagram.png](doc/logical_diagram.png)

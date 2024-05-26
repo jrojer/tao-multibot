@@ -3,10 +3,10 @@ from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
     ChatMessagesRepository,
 )
-from app.src.bot.repo.chat_messages_repository.content_type import ContentType
+from app.src.bot.repo.chat_messages_repository.content_type import ContentType as RepoContentType
+from app.src.bot.tao_bot.content_type import ContentType as TaoContentType
 from app.src.bot.repo.chat_messages_repository.role import Role
 from app.src.bot.repo.chat_messages_repository.source import Source
-from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
 from app.src.bot.tao_bot.tao_bot_conf import TaoBotConf
 from app.src.bot.tao_bot.tao_bot_response import TaoBotResponse, reply
 from app.src.bot.tao_bot.tao_bot_update import TaoBotUpdate
@@ -47,13 +47,13 @@ def _should_reply(update: TaoBotUpdate):
         update.is_reply_to_bot()
         or update.is_dm_to_bot()
         or update.is_chat_mention_of_bot()
-    ) and (update.content_type() == "text")
+    ) and (update.content_type() == TaoContentType.TEXT)
 
 
 def _a_chat_messasge_from(update: TaoBotUpdate, bot_username: str) -> ChatMessage:
-    content_type = ContentType.TEXT
-    if update.content_type() == "jpg":
-        content_type = ContentType.JPG
+    content_type = RepoContentType.TEXT
+    if update.content_type() == TaoContentType.IMAGE:
+        content_type = RepoContentType.IMAGE
 
     message = (
         ChatMessage.new()
@@ -130,7 +130,7 @@ class TaoBot:
                 chatform.add_message(
                     assistant_message(check_required(content, "content", str))
                 )
-            elif m.content_type() == ContentType.JPG:
+            elif m.content_type() == RepoContentType.IMAGE:
                 # TODO: consider decreasing image resolution for old images (more than 1 hour old)
                 image: Image = await self._content_downloader.download(
                     check_required(m.ref(), "ref", str)
@@ -209,7 +209,7 @@ class TaoBot:
             bot_message = (
                 ChatMessage.new()
                 .content(check_required(reply_message.content(), "content", str))
-                .content_type(ContentType.TEXT)
+                .content_type(RepoContentType.TEXT)
                 .user(self.bot_username())
                 .chat(update.chat_id())
                 .source(Source.TELEGRAM)
