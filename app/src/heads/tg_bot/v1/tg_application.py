@@ -22,6 +22,8 @@ from app.src.internal.audio.ogg_wav_converter import OgaWavConverter
 from app.src.observability.logger import Logger
 from app.src.heads.tg_bot.v1.tg_voice import TgVoice
 from app.src.heads.tg_bot.v1.typing_action import TypingAction
+import markdown
+import re
 
 logger = Logger(__name__)
 
@@ -93,13 +95,37 @@ def _post_mentioned(message: Message) -> Optional[str]:
         return reply.text[:PREVIEW_LENGTH]
 
 
+# NOTE: https://github.com/Eleirbag89/TelegramBotPHP/issues/152
+#       Telegram Bot API currently supports only <b>, <i>, <a>,<code> and <pre> tags, for HTML parse mode
+def _filter_tags(post: str) -> str:
+    # replace </p> with \n
+    post = re.sub(r"</p>", "\n", post)
+    # replace <strong> with b, <em> with i
+    post = re.sub(r"<strong>", "<b>", post)
+    post = re.sub(r"</strong>", "</b>", post)
+    post = re.sub(r"<em>", "<i>", post)
+    post = re.sub(r"</em>", "</i>", post)
+    # remove all other tags
+    return re.sub(r"<(?!\/?(b|i|a|code|pre)\b)[^>]+>", "", post)
+
+
+def _escape_period(post: str) -> str:
+    return post.replace(".", "\\.")
+
+
 async def safe_reply_markdown(update: Update, post: str) -> None:
     message: Message = check_required(update.message, "update.message", Message)
     try:
-        await message.reply_markdown(post)
-    except BadRequest:
+        await message.reply_html(
+            _filter_tags(
+                markdown.markdown(_escape_period(post), extensions=["fenced_code"])
+            )
+        )
+    except BadRequest as e:
         # TODO: find out why bot generated post is not accepted. This leads to ugly messages sometimes.
-        logger.warning("Failed to reply markdown, trying plain text.\n'''%s\n'''", post)
+        logger.warning(
+            "Failed to reply markdown, trying plain text.\n'''%s\n%s'''", post, e
+        )
         await message.reply_text(post)
 
 
