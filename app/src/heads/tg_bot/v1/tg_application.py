@@ -38,6 +38,9 @@ def extract_username(update: Update) -> str:
             lambda: (
                 message.from_user.username if message.from_user is not None else None
             ),
+            lambda: (
+                message.from_user.first_name if message.from_user is not None else None
+            ),
         ]
     )
     if username is None:
