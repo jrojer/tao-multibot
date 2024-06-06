@@ -65,5 +65,5 @@ class ImageReaderPlugin(Plugin):
     def is_delegate(self) -> bool:
         return True
     
-    def system_prompt_attachment(self) -> Optional[str]:
+    async def system_prompt_attachment(self) -> Optional[str]:
         return None

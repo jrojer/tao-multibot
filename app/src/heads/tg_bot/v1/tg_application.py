@@ -110,17 +110,13 @@ def _filter_tags(post: str) -> str:
     return re.sub(r"<(?!\/?(b|i|a|code|pre)\b)[^>]+>", "", post)
 
 
-def _escape_period(post: str) -> str:
-    return post.replace(".", "\\.")
-
-
 async def safe_reply_markdown(update: Update, post: str) -> None:
     message: Message = check_required(update.message, "update.message", Message)
     try:
         logger.info("Replying to %s with markdown: %s", message.chat_id, post)
         await message.reply_html(
             _filter_tags(
-                markdown.markdown(_escape_period(post), extensions=["fenced_code"])
+                markdown.markdown(post, extensions=["fenced_code"])
             )
         )
     except BadRequest as e:

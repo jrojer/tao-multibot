@@ -16,5 +16,5 @@ class Plugin(ABC):
         pass
 
     @abstractmethod
-    def system_prompt_attachment(self) -> Optional[str]:
+    async def system_prompt_attachment(self) -> Optional[str]:
         pass

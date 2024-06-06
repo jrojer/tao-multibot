@@ -7,6 +7,9 @@ from app.src.plugin_apps.storage_app.storage_plugin_server.resources.execute_sql
     ExecuteSqlResource,
 )
 from app.src.plugin_apps.storage_app.storage_plugin_server.resource import Resource
+from app.src.plugin_apps.storage_app.storage_plugin_server.resources.get_sys_prompt_attachment_resource import (
+    GetSysPromptAttachmentResource,
+)
 
 
 logger = Logger(__name__)
@@ -16,7 +19,12 @@ class StoragePluginServer:
     def __init__(self, port: int):
         self._port: int = check_required(port, "port", int)
         self._app: web.Application = web.Application()
-        self._app.add_routes([_route(ExecuteSqlResource())])
+        self._app.add_routes(
+            [
+                _route(ExecuteSqlResource()),
+                _route(GetSysPromptAttachmentResource()),
+            ]
+        )
         self._process: multiprocessing.Process
 
     async def _start(self):
