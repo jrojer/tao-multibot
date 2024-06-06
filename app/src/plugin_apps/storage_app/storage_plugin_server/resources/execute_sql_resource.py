@@ -17,7 +17,7 @@ class ExecuteSqlResource(Resource):
 
     @staticmethod
     def path() -> str:
-        return "/api/plugins/storage/{chat_id}/sql"
+        return "/api/{chat_id}/sql"
 
     @staticmethod
     def method() -> str:

@@ -16,7 +16,7 @@ from app.src.plugin_apps.storage_app.streamlit_app import start_streamlit
 logger = Logger(__name__)
 
 
-_PLUGIN_SEVER_PORT = 8889
+_PLUGIN_SEVER_PORT = 8999
 _STREAMLIT_PORT = 8501
 
 

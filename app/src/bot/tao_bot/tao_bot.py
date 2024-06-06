@@ -3,7 +3,9 @@ from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
     ChatMessagesRepository,
 )
-from app.src.bot.repo.chat_messages_repository.content_type import ContentType as RepoContentType
+from app.src.bot.repo.chat_messages_repository.content_type import (
+    ContentType as RepoContentType,
+)
 from app.src.bot.tao_bot.content_type import ContentType as TaoContentType
 from app.src.bot.repo.chat_messages_repository.role import Role
 from app.src.bot.repo.chat_messages_repository.source import Source
@@ -25,6 +27,9 @@ from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
 from app.src.plugins.code_executor.code_executor_plugin import CodeExecutorPlugin
+from app.src.plugins.database_manager.remote_storage_app_plugin import (
+    RemoteStorageAppPlugin,
+)
 
 
 logger = Logger(__name__)
@@ -191,11 +196,18 @@ class TaoBot:
             _log_update(update, "Processing")
 
             async def send_message(message: str):
-                await self._message_sender.send_text(update.chat_id(), message, username="function")
+                await self._message_sender.send_text(
+                    update.chat_id(), message, username="function"
+                )
 
             reply_messages: list[ChatformMessage] = await self._gateway.forward(
                 chatform,
-                [CodeExecutorPlugin(on_success=send_message)],
+                # fmt: off
+                [
+                    CodeExecutorPlugin(on_success=send_message), 
+                    RemoteStorageAppPlugin(update.chat_id())
+                ],
+                # fmt: on
             )
 
             self._report_usage(
