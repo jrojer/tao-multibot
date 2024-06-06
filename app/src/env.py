@@ -33,6 +33,9 @@ def LOG_DIR() -> Path:
     return _create_if_not_exists(VAR_DIR() / "logs")
 
 
+def DATA_DIR() -> Path:
+    return _create_if_not_exists(VAR_DIR() / "data")
+
 def SERVER_PORT() -> int:
     return int(_vars["SERVER_PORT"])
 

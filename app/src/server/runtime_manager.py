@@ -18,13 +18,13 @@ class RuntimeManager:
 
     def start_all(self):
         for bot_conf in self._master_config.bots():
-            self.start(bot_conf)
+            self.start_bot(bot_conf)
 
     def stop_all(self):
         for bot_conf in self._master_config.bots():
             self.stop(bot_conf["bot_id"])
 
-    def start(self, bot_conf: dict[str, Any]):
+    def start_bot(self, bot_conf: dict[str, Any]):
         bot_id: str = bot_conf["bot_id"]
         if bot_conf["type"] == "tg_bot":
             conf_client: ConfClient = HttpConfClient(self._server_port, bot_id)

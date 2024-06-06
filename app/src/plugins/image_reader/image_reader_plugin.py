@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Optional
 from app.src.butter.checks import check_that
 from app.src.gpt.plugin import Plugin
 from app.src.internal.common.content_downloader import ContentDownloader
@@ -12,7 +12,7 @@ from app.src.gpt.simple_image_text_completer import (
 
 logger = Logger(__name__)
 
-# NOTE: DEPRECATED as the chatform already supports images
+# NOTE: This can help for the models that can call function but unable to read images directly
 class ImageReaderPlugin(Plugin):
     def __init__(
         self,
@@ -64,3 +64,6 @@ class ImageReaderPlugin(Plugin):
 
     def is_delegate(self) -> bool:
         return True
+    
+    def system_prompt_attachment(self) -> Optional[str]:
+        return None

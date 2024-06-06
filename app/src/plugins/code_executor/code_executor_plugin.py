@@ -49,6 +49,9 @@ class CodeExecutorPlugin(Plugin):
 
     def is_delegate(self) -> bool:
         return False
+    
+    def system_prompt_attachment(self) -> Optional[str]:
+        return None
 
     async def call(self, name: str, args: str) -> str:
         logger.info("Calling function %s with args %s", name, args)

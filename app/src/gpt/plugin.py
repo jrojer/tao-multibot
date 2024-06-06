@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Optional
 
 
 class Plugin(ABC):
@@ -13,4 +13,8 @@ class Plugin(ABC):
 
     @abstractmethod
     def is_delegate(self) -> bool:
+        pass
+
+    @abstractmethod
+    def system_prompt_attachment(self) -> Optional[str]:
         pass
