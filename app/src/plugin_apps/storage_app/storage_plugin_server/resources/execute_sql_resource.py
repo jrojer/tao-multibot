@@ -1,4 +1,6 @@
 import http
+
+import pandas as pd
 from app.src.butter.checks import check_required
 from app.src.observability.logger import Logger
 from aiohttp import web
@@ -39,7 +41,15 @@ class ExecuteSqlResource(Resource):
 
             db_path = env.DATA_DIR() / f"{chat_id}.db"
             try:
-                result: list[dict[str, str]] = SqlExecutor(db_path).execute(sql)
+                executor = SqlExecutor(db_path)
+                result: list[dict[str, str]] = executor.execute(sql)
+                tables = executor.get_tables()
+                for table_name in tables:
+                    if table_name in sql:
+                        df_dir = env.DATA_DIR() / chat_id
+                        df_dir.mkdir(parents=True, exist_ok=True)
+                        data = executor.execute(f"SELECT * FROM {table_name}")
+                        pd.DataFrame(data).to_csv(df_dir / f"{table_name}.tsv", sep="\t", index=False)
             except Exception as e:
                 if isinstance(e, OperationalError):
                     return web.json_response(

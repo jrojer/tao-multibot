@@ -29,7 +29,7 @@ def test_sql_executor(tmp_db: Path):
     assert items[1]["id"] == 2
     assert items[1]["name"] == "test2"
 
-    assert executor.get_schemas() == {
+    assert executor.get_tables() == {
         "test": [
             {
                 "name": "id",
@@ -51,4 +51,4 @@ def test_sql_executor(tmp_db: Path):
 
 def test_sql_get_schemas_on_empty_db(tmp_db: Path):
     executor = SqlExecutor(tmp_db)
-    assert executor.get_schemas() == {}
+    assert executor.get_tables() == {}

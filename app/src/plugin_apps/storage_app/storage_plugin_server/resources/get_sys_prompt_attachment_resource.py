@@ -35,12 +35,12 @@ class GetSysPromptAttachmentResource(Resource):
                 request.match_info.get("chat_id"), "chat_id", str
             )
             db_path = env.DATA_DIR() / f"{chat_id}.db"
-            result: dict[str, list[dict[str, Any]]] = SqlExecutor(db_path).get_schemas()
+            result: dict[str, list[dict[str, Any]]] = SqlExecutor(db_path).get_tables()
 
             if len(result) == 0:
                 return web.Response(status=http.HTTPStatus.NO_CONTENT)
 
-            response = "Available tables:\n\n"
+            response = "Use SQLite syntax. Available tables:\n\n"
             for table_name, columns in result.items():
                 response += _generate_create_table_sql(table_name, columns) + "\n\n"
 

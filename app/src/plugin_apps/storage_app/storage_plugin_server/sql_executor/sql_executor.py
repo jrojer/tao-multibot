@@ -31,7 +31,7 @@ class SqlExecutor:
         else:
             return []
 
-    def get_schemas(self) -> dict[str, list[dict[str, Any]]]:
+    def get_tables(self) -> dict[str, list[dict[str, Any]]]:
         d = {}
         cursor = self._conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")

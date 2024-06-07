@@ -1,5 +1,5 @@
-from app.src.plugin_apps.storage_app.storage_plugin_server.resources.get_sys_prompt_attachment_resource import (
-    GetSysPromptAttachmentResource,
+from app.src.plugin_apps.storage_app.storage_plugin_server.resources.execute_sql_resource import (
+    ExecuteSqlResource,
 )
 import pytest
 from app.src import env
@@ -13,17 +13,22 @@ class MockRequest:
         def __init__(self, chat_id: str):
             self.chat_id = chat_id
 
-        def get(self, key) -> str: # type: ignore
+        def get(self, key) -> str:  # type: ignore
             return self.chat_id
 
     def __init__(self, chat_id: str):
         self.match_info = MockRequest.MockMatchInfo(chat_id)
+
+    async def json(self):
+        return {"sql": "SELECT * FROM test;"}
 
 
 @pytest.fixture
 def chat_id():
     chat_id = "test_sql_executor"
     tmp_db = env.DATA_DIR() / f"{chat_id}.db"
+    df_dir = env.DATA_DIR() / chat_id
+    test_tsv = df_dir / "test.tsv"
     tmp_db.touch()
     tmp_db.unlink()
     executor = SqlExecutor(tmp_db)
@@ -38,10 +43,12 @@ def chat_id():
     )
     yield chat_id
     tmp_db.unlink()
+    test_tsv.unlink()
+    df_dir.rmdir()
 
 
-async def test_get_sys_prompt_attachment_resource(chat_id: str):
-    resource = GetSysPromptAttachmentResource()
+async def test_execute_sql_resource(chat_id: str):
+    resource = ExecuteSqlResource()
 
     handler = resource.handler()
 
@@ -50,21 +57,3 @@ async def test_get_sys_prompt_attachment_resource(chat_id: str):
     res = await handler(req)  # type: ignore
 
     assert res.status == 200
-    assert (
-        res.text
-        == """\
-Use SQLite syntax. Available tables:
-
-CREATE TABLE test (
-  id INTEGER PRIMARY KEY,
-  name TEXT
-);
-
-CREATE TABLE another_table (
-  id INTEGER PRIMARY KEY,
-  field TEXT,
-  date DATETIME
-);
-
-"""
-    )

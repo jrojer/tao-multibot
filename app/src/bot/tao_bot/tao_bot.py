@@ -120,13 +120,16 @@ class TaoBot:
         return authorised
 
     async def _build_chatform(self, chat_id: str) -> Chatform:
-        attachment = await RemoteStorageAppPlugin(chat_id).system_prompt_attachment()
-        system_prompt = """\
+        # TODO: process attachments only for enabled plugins
+        attachment: Optional[str] = await RemoteStorageAppPlugin(chat_id).system_prompt_attachment()
+        system_prompt = self._conf.system_prompt()
+        if attachment is not None:
+            system_prompt = """\
 {sys_prompt}
 
 {attachment}
-""".format(sys_prompt=self._conf.system_prompt(), attachment=attachment)
-        
+""".format(sys_prompt=system_prompt, attachment=attachment)
+
         chatform = Chatform(system_prompt)
         messages = self._messages_repo.fetch_last_messages_by_chat_and_adder(
             chat_id, self.bot_username(), self._conf.number_of_messages_per_completion()
