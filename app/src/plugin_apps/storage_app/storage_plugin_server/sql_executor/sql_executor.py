@@ -31,6 +31,8 @@ class SqlExecutor:
         else:
             return []
 
+    # TODO: to be moved to TableManager
+    # TODO: it questionable whether GPT prefers calling the SELECT statement by itself or having the data in its system prompt
     def get_tables(self) -> dict[str, list[dict[str, Any]]]:
         d = {}
         cursor = self._conn.cursor()
