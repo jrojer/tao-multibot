@@ -59,7 +59,7 @@ class RemoteStorageAppPlugin(Plugin):
             logger.warning(
                 f"Failed to deserialise args: {args}, error: {str(e)}"
             )
-            return str({"status": "error", "error": "Failed to deserialise args. Expected JSON with 'sql' field"})
+            return str({"status": "error", "error": "Failed to deserialise args. Expected JSON with 'sql' field. Use sqlite syntax. Please try again."})
         check_that("sql" in deserialised, f'"sql" field not found in args: {args}')
 
         url: str = f"http://localhost:{_PLUGIN_SEVER_PORT}/api/{self._chat_id}/sql"

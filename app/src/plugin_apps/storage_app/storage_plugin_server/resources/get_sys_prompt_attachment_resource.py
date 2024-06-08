@@ -3,15 +3,12 @@ from typing import Any
 from app.src.butter.checks import check_required
 from app.src.observability.logger import Logger
 from aiohttp import web
-from app.src import env
 
 from app.src.plugin_apps.storage_app.storage_plugin_server.resource import (
     Handler,
     Resource,
 )
-from app.src.plugin_apps.storage_app.storage_plugin_server.sql_executor.sql_executor import (
-    SqlExecutor,
-)
+from app.src.plugin_apps.storage_app.table_manager import TableManager
 
 
 logger = Logger(__name__)
@@ -34,8 +31,7 @@ class GetSysPromptAttachmentResource(Resource):
             chat_id: str = check_required(
                 request.match_info.get("chat_id"), "chat_id", str
             )
-            db_path = env.DATA_DIR() / f"{chat_id}.db"
-            result: dict[str, list[dict[str, Any]]] = SqlExecutor(db_path).get_tables()
+            result: dict[str, list[dict[str, Any]]] = TableManager(chat_id).get_tables()
 
             if len(result) == 0:
                 return web.Response(status=http.HTTPStatus.NO_CONTENT)
@@ -57,7 +53,7 @@ def _generate_create_table_sql(table_name: str, columns: list[dict[str, Any]]) -
         column_def = f"{column['name']} {column['type']}"
         if column["notnull"]:
             column_def += " NOT NULL"
-        if column["default"] is not None:
+        if column["dflt_value"] is not None:
             column_def += f" DEFAULT {column['default']}"
         if column["pk"]:
             column_def += " PRIMARY KEY"

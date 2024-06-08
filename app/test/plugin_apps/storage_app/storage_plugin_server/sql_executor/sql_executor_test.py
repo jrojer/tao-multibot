@@ -21,34 +21,10 @@ def test_sql_executor(tmp_db: Path):
     executor.execute("INSERT INTO test (name) VALUES ('test');")
     executor.execute("INSERT INTO test (name) VALUES ('test2');")
 
-    items = executor.execute("SELECT * FROM test;")
+    items = executor.execute("SELECT * FROM test;").rowwise()
 
     assert len(items) == 2
     assert items[0]["id"] == 1
     assert items[0]["name"] == "test"
     assert items[1]["id"] == 2
     assert items[1]["name"] == "test2"
-
-    assert executor.get_tables() == {
-        "test": [
-            {
-                "name": "id",
-                "type": "INTEGER",
-                "notnull": False,
-                "default": None,
-                "pk": True,
-            },
-            {
-                "name": "name",
-                "type": "TEXT",
-                "notnull": False,
-                "default": None,
-                "pk": False,
-            },
-        ]
-    }
-
-
-def test_sql_get_schemas_on_empty_db(tmp_db: Path):
-    executor = SqlExecutor(tmp_db)
-    assert executor.get_tables() == {}

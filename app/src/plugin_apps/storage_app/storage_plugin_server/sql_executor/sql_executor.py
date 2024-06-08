@@ -10,11 +10,38 @@ from app.src.plugin_apps.storage_app.storage_plugin_server.sql_executor.operatio
 
 
 class SqlExecutor:
+    class Output:
+        def __init__(self):
+            self.columns: list[str] = []
+            self.rows: list[list[Any]] = []
+
+        def rowwise(self) -> list[dict[str, Any]]:
+            return [dict(zip(self.columns, row)) for row in self.rows]
+
+        def columnwise(self) -> dict[str, list[Any]]:
+            return {column: [row[i] for row in self.rows] for i, column in enumerate(self.columns)}
+        
+        def empty(self) -> bool:
+            return len(self.columns) == 0
+        
+    @staticmethod
+    def output(columns: list[str], rows: list[list[Any]]) -> Output:
+        obj = SqlExecutor.Output()
+        obj.columns = columns
+        obj.rows = rows
+        return obj
+    
+    @staticmethod
+    def empty_output() -> Output:
+        return SqlExecutor.Output()
+
     def __init__(self, db_path: str | Path):
         check_required(db_path, "db_path", (str, Path))
         self._conn = sqlite3.connect(db_path)
 
-    def execute(self, sql: str) -> list[dict[str, str]]:
+    def execute(
+        self, sql: str
+    ) -> Output:
         cursor = self._conn.cursor()
         try:
             cursor.execute(sql)
@@ -24,32 +51,9 @@ class SqlExecutor:
 
         # re find SELECT statement as case-insensitive and replace it with SELECT:
         sql = re.sub(r"(?i)SELECT", "SELECT", sql)
-        if "SELECT" in sql:
+        if "SELECT" in sql or "PRAGMA table_info" in sql:
             columns = [item[0] for item in cursor.description]
             rows = cursor.fetchall()
-            return [dict(zip(columns, row)) for row in rows]
+            return self.output(columns, rows)
         else:
-            return []
-
-    # TODO: to be moved to TableManager
-    # TODO: it questionable whether GPT prefers calling the SELECT statement by itself or having the data in its system prompt
-    def get_tables(self) -> dict[str, list[dict[str, Any]]]:
-        d = {}
-        cursor = self._conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        for table in cursor.fetchall():
-            cursor.execute(f"PRAGMA table_info({table[0]})")
-            d[table[0]] = cursor.fetchall()
-        return {
-            table: [
-                {
-                    "name": name,
-                    "type": type_,
-                    "notnull": bool(notnull), # type: ignore
-                    "default": default,
-                    "pk": bool(pk), # type: ignore
-                }
-                for cid, name, type_, notnull, default, pk in d[table] # type: ignore
-            ]
-            for table in d # type: ignore
-        }
+            return self.empty_output()

@@ -1,19 +1,15 @@
 import http
 
-import pandas as pd
 from app.src.butter.checks import check_required
 from app.src.observability.logger import Logger
 from aiohttp import web
-from app.src import env
 
 from app.src.plugin_apps.storage_app.storage_plugin_server.resource import (
     Handler,
     Resource,
 )
 from app.src.plugin_apps.storage_app.storage_plugin_server.sql_executor.operational_error import OperationalError
-from app.src.plugin_apps.storage_app.storage_plugin_server.sql_executor.sql_executor import (
-    SqlExecutor,
-)
+from app.src.plugin_apps.storage_app.table_manager import TableManager
 
 
 logger = Logger(__name__)
@@ -39,17 +35,9 @@ class ExecuteSqlResource(Resource):
             sql: str = check_required((await request.json())["sql"], "sql", str)
             logger.info(f"Executing SQL: {sql} for chat_id: {chat_id}")
 
-            db_path = env.DATA_DIR() / f"{chat_id}.db"
             try:
-                executor = SqlExecutor(db_path)
-                result: list[dict[str, str]] = executor.execute(sql)
-                tables = executor.get_tables()
-                for table_name in tables:
-                    if table_name in sql:
-                        df_dir = env.DATA_DIR() / chat_id
-                        df_dir.mkdir(parents=True, exist_ok=True)
-                        data = executor.execute(f"SELECT * FROM {table_name}")
-                        pd.DataFrame(data).to_csv(df_dir / f"{table_name}.tsv", sep="\t", index=False)
+                tm = TableManager(chat_id)
+                result = tm.execute_sql(sql)
             except Exception as e:
                 if isinstance(e, OperationalError):
                     return web.json_response(
