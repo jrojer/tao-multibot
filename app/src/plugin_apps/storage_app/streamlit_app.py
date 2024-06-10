@@ -1,3 +1,4 @@
+from typing import Optional
 import streamlit as st
 from app.src.observability.logger import Logger
 from app.src.plugin_apps.storage_app.table_manager import TableManager
@@ -6,17 +7,27 @@ logger = Logger(__name__)
 
 _TM = TableManager()
 
+# TODO: add authentication
+# TODO: add chat names for better UX
+
+
+
 def update(chat_id: str, table_name: str) -> None:
+    def _get_row_id(row_number: int) -> Optional[str]:
+        rowids = _TM.execute_sql(f"SELECT rowid FROM {table_name} LIMIT 1 OFFSET {row_number}", chat_id)
+        if len(rowids) == 0:
+            logger.warning(f"rowid not found for row_number: {row_number}")
+            return None
+        return rowids[0]["rowid"]
+
     key = f"{table_name}_{chat_id}"
     changes = st.session_state[key]
     logger.info(f"changes: {changes} to table: {table_name} for chat_id: {chat_id}")
     for row_number, columns in changes["edited_rows"].items():
         for column_name, value in columns.items():
-            rowids = _TM.execute_sql(f"SELECT rowid FROM {table_name} LIMIT 1 OFFSET {row_number}", chat_id)
-            if len(rowids) == 0:
-                logger.warning(f"rowid not found for row_number: {row_number}")
+            row_id = _get_row_id(row_number)
+            if row_id is None:
                 continue
-            row_id = rowids[0]["rowid"]
             sql = f"UPDATE {table_name} SET {column_name} = '{value}' WHERE rowid = {row_id}"
             _TM.execute_sql(sql, chat_id)
 
@@ -24,13 +35,16 @@ def update(chat_id: str, table_name: str) -> None:
         for column_name, value in columns.items():
             sql = f"INSERT INTO {table_name} ({column_name}) VALUES ('{value}')"
             _TM.execute_sql(sql, chat_id)
-
-
+    for row_number in changes["deleted_rows"]:
+        row_id = _get_row_id(row_number)
+        sql = f"DELETE FROM {table_name} WHERE rowid = {row_id}"
+        _TM.execute_sql(sql, chat_id)
     
+
 def start_streamlit():
     files = _TM.get_dataframes()
     if len(files) == 0:
-        st.write("No tables found")
+        st.write("No tables found") # type: ignore
         return
     # TODO: consider refactor st.tabs usage
     st_tabs = st.tabs([file["table_name"] for file in files])
