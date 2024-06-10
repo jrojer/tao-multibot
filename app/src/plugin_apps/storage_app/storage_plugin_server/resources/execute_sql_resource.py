@@ -36,8 +36,7 @@ class ExecuteSqlResource(Resource):
             logger.info(f"Executing SQL: {sql} for chat_id: {chat_id}")
 
             try:
-                tm = TableManager(chat_id)
-                result = tm.execute_sql(sql)
+                result = TableManager().execute_sql(sql, chat_id)
             except Exception as e:
                 if isinstance(e, OperationalError):
                     return web.json_response(

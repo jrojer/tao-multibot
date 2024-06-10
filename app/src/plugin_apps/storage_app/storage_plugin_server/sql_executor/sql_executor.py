@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 import sqlite3
 from typing import Any
 
@@ -7,6 +6,8 @@ from app.src.butter.checks import check_required
 from app.src.plugin_apps.storage_app.storage_plugin_server.sql_executor.operational_error import (
     OperationalError,
 )
+
+_connection_cache: dict[str, sqlite3.Connection] = {}
 
 
 class SqlExecutor:
@@ -37,7 +38,9 @@ class SqlExecutor:
 
     def __init__(self, db_path: str | Path):
         check_required(db_path, "db_path", (str, Path))
-        self._conn = sqlite3.connect(db_path)
+        if db_path not in _connection_cache:
+            _connection_cache[str(db_path)] = sqlite3.connect(db_path)
+        self._conn = _connection_cache[str(db_path)]
 
     def execute(
         self, sql: str
@@ -49,9 +52,7 @@ class SqlExecutor:
         except sqlite3.OperationalError as e:
             raise OperationalError(str(e))
 
-        # re find SELECT statement as case-insensitive and replace it with SELECT:
-        sql = re.sub(r"(?i)SELECT", "SELECT", sql)
-        if "SELECT" in sql or "PRAGMA table_info" in sql:
+        if cursor.description is not None:
             columns = [item[0] for item in cursor.description]
             rows = cursor.fetchall()
             return self.output(columns, rows)

@@ -31,7 +31,7 @@ class GetSysPromptAttachmentResource(Resource):
             chat_id: str = check_required(
                 request.match_info.get("chat_id"), "chat_id", str
             )
-            result: dict[str, list[dict[str, Any]]] = TableManager(chat_id).get_tables()
+            result: dict[str, list[dict[str, Any]]] = TableManager().get_tables(chat_id)
 
             if len(result) == 0:
                 return web.Response(status=http.HTTPStatus.NO_CONTENT)

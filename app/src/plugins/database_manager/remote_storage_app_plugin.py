@@ -43,6 +43,8 @@ class RemoteStorageAppPlugin(Plugin):
             f"http://localhost:{_PLUGIN_SEVER_PORT}/api/{self._chat_id}/sysprompt"
         )
         status, text = await _send_get_request(url)
+        if status == http.HTTPStatus.NO_CONTENT:
+            return None
         if status != http.HTTPStatus.OK:
             logger.error(
                 f"Failed to get system prompt attachment. Status code: {status}, response: {text}"

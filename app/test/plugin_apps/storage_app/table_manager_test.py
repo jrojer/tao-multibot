@@ -2,7 +2,6 @@ from pathlib import Path
 import pytest
 from app.src import env
 from app.src.plugin_apps.storage_app.table_manager import TableManager
-import pandas as pd
 
 
 @pytest.fixture
@@ -25,13 +24,13 @@ def fixture():
 def test_table_manager(fixture: tuple[str, Path]):
     chat_id = fixture[0]
     data_dir = fixture[1]
-    tm = TableManager(chat_id, data_dir)
+    tm = TableManager(data_dir)
 
-    tm.execute_sql("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT);")
-    tm.execute_sql("INSERT INTO test (name) VALUES ('test');")
-    tm.execute_sql("INSERT INTO test (name) VALUES ('test2');")
+    tm.execute_sql("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT);", chat_id)
+    tm.execute_sql("INSERT INTO test (name) VALUES ('test');", chat_id)
+    tm.execute_sql("INSERT INTO test (name) VALUES ('test2');", chat_id)
 
-    items = tm.execute_sql("SELECT * FROM test;")
+    items = tm.execute_sql("SELECT * FROM test;", chat_id)
 
     assert len(items) == 2
     assert items[0]["id"] == 1
@@ -39,7 +38,7 @@ def test_table_manager(fixture: tuple[str, Path]):
     assert items[1]["id"] == 2
     assert items[1]["name"] == "test2"
 
-    assert tm.get_tables() == {
+    assert tm.get_tables(chat_id) == {
         "test": [
             {
                 "cid": 0,
@@ -61,51 +60,16 @@ def test_table_manager(fixture: tuple[str, Path]):
     }
 
 
-def test_table_manager_creates_empty_dataframe_with_columns_on_create_table_request(
-   fixture: tuple[str, Path]
-):
+def test_update_with_dataframe(fixture: tuple[str, Path]):
     chat_id = fixture[0]
     data_dir = fixture[1]
-    tm = TableManager(chat_id, data_dir)
+    tm = TableManager(data_dir)
 
-    tm.execute_sql("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT);")
+    tm.execute_sql("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT);", chat_id)
+    tm.execute_sql("INSERT INTO test (name) VALUES ('test');", chat_id)
+    tm.execute_sql("INSERT INTO test (name) VALUES ('test2');", chat_id)
 
-    assert tm.get_tables() == {
-        "test": [
-            {
-                "cid": 0,
-                "name": "id",
-                "type": "INTEGER",
-                "notnull": False,
-                "dflt_value": None,
-                "pk": True,
-            },
-            {
-                "cid": 1,
-                "name": "name",
-                "type": "TEXT",
-                "notnull": False,
-                "dflt_value": None,
-                "pk": False,
-            },
-        ]
-    }
-
-    assert (data_dir / chat_id / "test.tsv").exists()
-    df = pd.read_csv(data_dir / chat_id / "test.tsv", sep="\t")  # type: ignore
-    assert list(df.columns) == ["id", "name"]
-
-
-def test_sync_sqlite(fixture: tuple[str, Path]):
-    chat_id = fixture[0]
-    data_dir = fixture[1]
-    tm = TableManager(chat_id, data_dir)
-
-    tm.execute_sql("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT);")
-    tm.execute_sql("INSERT INTO test (name) VALUES ('test');")
-    tm.execute_sql("INSERT INTO test (name) VALUES ('test2');")
-
-    files = TableManager.get_tsv_files_recursively(data_dir)
+    files = tm.get_dataframes()
 
     assert len(files) == 1
     for file in files:
@@ -113,9 +77,9 @@ def test_sync_sqlite(fixture: tuple[str, Path]):
 
     df = files[0]["df"]
     df.at[0, "name"] = "updated_test"
-    tm.sync_sqlite("test", df)
+    tm.update_with_dataframe("test", chat_id, df)
 
-    result = tm.execute_sql("SELECT * FROM test;")
+    result = tm.execute_sql("SELECT * FROM test;", chat_id)
     assert len(result) == 2
     assert result[0]["name"] == "updated_test"
     assert result[1]["name"] == "test2"
@@ -125,5 +89,16 @@ def test_sync_sqlite(fixture: tuple[str, Path]):
 def test_sql_get_tables_on_empty_db(fixture: tuple[str, Path]):
     chat_id = fixture[0]
     data_dir = fixture[1]
-    tm = TableManager(chat_id, data_dir)
-    assert tm.get_tables() == {}
+    tm = TableManager(data_dir)
+    assert tm.get_tables(chat_id) == {}
+
+def test_get_dataframes_on_empty_table(fixture: tuple[str, Path]):
+    chat_id = fixture[0]
+    data_dir = fixture[1]
+    tm = TableManager(data_dir)
+    tm.execute_sql("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT);", chat_id)
+    dfs = tm.get_dataframes()
+    assert len(dfs) == 1
+    assert chat_id == dfs[0]["chat_id"]
+    assert "test" == dfs[0]["table_name"]
+    assert dfs[0]["df"].empty

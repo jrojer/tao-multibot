@@ -11,59 +11,53 @@ from app.src.observability.logger import Logger
 logger = Logger(__name__)
 
 
-# TODO: this class is responsible for the DATA_DIR
+# NOTE: this class is responsible for the DATA_DIR
 class TableManager:
-    def __init__(self, chat_id: str, data_dir: Path = env.DATA_DIR()):
-        self._chat_id: str = check_required(chat_id, "chat_id", str)
-        db_path = data_dir / f"{chat_id}.db"
-        self._sql_executor = SqlExecutor(db_path)
-        self._data_dir = data_dir
+    def __init__(self, data_dir: Path = env.DATA_DIR()):
+        self._data_dir = check_required(data_dir, "data_dir", Path)
+        self._chat_ids = self._get_chat_ids()
 
-    def execute_sql(self, sql: str) -> list[dict[str, str]]:
-        result = self._sql_executor.execute(sql)
-        tables = self.get_tables()
-        for table_name in tables:
-            if table_name in sql:
-                self.sync_dataframe(table_name)
+    def execute_sql(self, sql: str, chat_id: str) -> list[dict[str, str]]:
+        executor = SqlExecutor(self._get_db(chat_id))
+        result = executor.execute(sql)
         return result.rowwise()
-    
-    def sync_dataframe(self, table_name: str) -> None:
-        df_dir = self._data_dir / self._chat_id
-        df_dir.mkdir(parents=True, exist_ok=True)
-        data = self._sql_executor.execute(f"SELECT * FROM {table_name}").columnwise()
-        pd.DataFrame(data).to_csv(df_dir / f"{table_name}.tsv", sep="\t", index=False)
 
-    def sync_sqlite(self, table_name: str, df: pd.DataFrame) -> None:
-        df.to_sql(table_name, self._sql_executor._conn, if_exists="replace", index=False) # type: ignore
-        df_dir = self._data_dir / self._chat_id
-        df_dir.mkdir(parents=True, exist_ok=True)
-        df.to_csv(df_dir / f"{table_name}.tsv", sep="\t", index=False)
+    def update_with_dataframe(self, table_name: str, chat_id: str, df: pd.DataFrame) -> None:
+        executor = SqlExecutor(self._get_db(chat_id))
+        df.to_sql(table_name, executor._conn, if_exists="replace", index=False) # type: ignore
     
-    def get_tables(self) -> dict[str, list[dict[str, Any]]]:
+    def get_tables(self, chat_id: str) -> dict[str, list[dict[str, Any]]]:
+        executor = SqlExecutor(self._get_db(chat_id))
         d: dict[str, list[dict[str, Any]]] = {}
-        tabels = self._sql_executor.execute("SELECT name FROM sqlite_master WHERE type='table';").rowwise()
+        tabels = executor.execute("SELECT name FROM sqlite_master WHERE type='table';").rowwise()
         for table in tabels:
-            res = self._sql_executor.execute(f"PRAGMA table_info({table["name"]})").rowwise()
+            res = executor.execute(f"PRAGMA table_info({table["name"]})").rowwise()
             d[table["name"]] = res 
         return d
 
-    @staticmethod
-    def get_tsv_files_recursively(data_dir: Path = env.DATA_DIR()) -> list[dict[str, Any]]:
+    def get_dataframes(self) -> list[dict[str, Any]]:
         files: list[dict[str, Any]] = []
-
-        def recurse(dir: Path):
-            for item in dir.iterdir():
-                if item.is_dir():
-                    recurse(item)
-                else:
-                    if item.suffix == ".tsv":
-                        files.append(
-                            {
-                                "chat_id": dir.name, 
-                                "table_name": item.stem, 
-                                "df": pd.read_csv(item, sep="\t"), # type: ignore
-                            }
-                        )
-
-        recurse(data_dir)
+        chat_ids = self._get_chat_ids()
+        for chat_id in chat_ids:
+            executor = SqlExecutor(self._get_db(chat_id))
+            tables = executor.execute("SELECT name FROM sqlite_master WHERE type='table';").rowwise()
+            for table in tables:
+                table_name = table["name"]
+                df = pd.DataFrame(executor.execute(f"SELECT * FROM {table_name};").columnwise())
+                files.append({"chat_id": chat_id, "table_name": table_name, "df": df})
         return files
+
+    def _get_db(self, chat_id: str) -> Path:
+        if chat_id not in self._chat_ids:
+            self._chat_ids.add(chat_id)
+            self._update_chat_ids(chat_id)
+        return self._data_dir / f"{chat_id}.db"
+    
+    def _update_chat_ids(self, chat_id: str) -> None:
+        executor = SqlExecutor(self._data_dir / "metadata.db")
+        executor.execute(f"CREATE TABLE IF NOT EXISTS chat_ids (chat_id TEXT PRIMARY KEY);")
+        executor.execute(f"INSERT OR IGNORE INTO chat_ids (chat_id) VALUES ('{chat_id}');")
+
+    def _get_chat_ids(self) -> set[str]:
+        executor = SqlExecutor(self._data_dir / "metadata.db")
+        return set(d["chat_id"] for d in executor.execute("SELECT chat_id FROM chat_ids;").rowwise())
