@@ -3,6 +3,11 @@ from typing import Any, Optional
 
 
 class Plugin(ABC):
+    @staticmethod
+    @abstractmethod
+    def name() -> str:
+        pass
+
     @abstractmethod
     def functions(self) -> list[dict[str, Any]]:
         pass

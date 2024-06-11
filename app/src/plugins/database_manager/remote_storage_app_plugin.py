@@ -15,6 +15,10 @@ class RemoteStorageAppPlugin(Plugin):
     def __init__(self, chat_id: str):
         self._chat_id: str = check_required(chat_id, "chat_id", str)
 
+    @staticmethod
+    def name() -> str:
+        return "remote_storage_app"
+
     def functions(self) -> list[dict[str, Any]]:
         return [
             {

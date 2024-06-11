@@ -40,3 +40,6 @@ class TaoBotConfClient(TaoBotConf):
 
     def bot_mention_names(self) -> list[str]:
         return self._conf()["bot_mention_names"]
+    
+    def plugins(self) -> list[str]:
+        return self._conf()["plugins"]

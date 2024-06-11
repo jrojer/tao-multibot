@@ -27,6 +27,10 @@ class CodeExecutorPlugin(Plugin):
         )
         self._on_success: Optional[ASYNC_CALLBACK] = on_success
 
+    @staticmethod
+    def name() -> str:
+        return "code_executor"
+
     def functions(self) -> list[dict[str, Any]]:
         return [
             {

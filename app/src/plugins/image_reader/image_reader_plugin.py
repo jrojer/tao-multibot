@@ -24,6 +24,10 @@ class ImageReaderPlugin(Plugin):
         self._system_prompt: str = system_prompt
         self._token: str = openai_token
 
+    @staticmethod
+    def name() -> str:
+        return "image_reader"
+
     def functions(self) -> list[dict[str, Any]]:
         return [
             {

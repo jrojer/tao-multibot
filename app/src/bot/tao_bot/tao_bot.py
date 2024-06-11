@@ -21,6 +21,7 @@ from app.src.gpt.chatform_message import (
     user_message,
 )
 from app.src.gpt.gpt_gateway import GptGateway
+from app.src.gpt.plugin import Plugin
 from app.src.internal.common.content_downloader import ContentDownloader
 from app.src.internal.common.message_sender import MessageSender
 from app.src.internal.image.image import Image
@@ -121,14 +122,20 @@ class TaoBot:
 
     async def _build_chatform(self, chat_id: str) -> Chatform:
         # TODO: process attachments only for enabled plugins
-        attachment: Optional[str] = await RemoteStorageAppPlugin(chat_id).system_prompt_attachment()
         system_prompt = self._conf.system_prompt()
-        if attachment is not None:
-            system_prompt = """\
+        for plugin_name in self._conf.plugins():
+            if plugin_name == RemoteStorageAppPlugin.name():
+                attachment: Optional[str] = await RemoteStorageAppPlugin(
+                    chat_id
+                ).system_prompt_attachment()
+                if attachment is not None:
+                    system_prompt = """\
 {sys_prompt}
 
 {attachment}
-""".format(sys_prompt=system_prompt, attachment=attachment)
+""".format(
+                        sys_prompt=system_prompt, attachment=attachment
+                    )
 
         chatform = Chatform(system_prompt)
         messages = self._messages_repo.fetch_last_messages_by_chat_and_adder(
@@ -209,14 +216,16 @@ class TaoBot:
                     update.chat_id(), message, username="function"
                 )
 
+            plugins: list[Plugin] = []
+            for plugin_name in self._conf.plugins():
+                if plugin_name == RemoteStorageAppPlugin.name():
+                    plugins.append(RemoteStorageAppPlugin(update.chat_id()))
+                if plugin_name == CodeExecutorPlugin.name():
+                    plugins.append(CodeExecutorPlugin(on_success=send_message))
+
             reply_messages: list[ChatformMessage] = await self._gateway.forward(
                 chatform,
-                # fmt: off
-                [
-                    CodeExecutorPlugin(on_success=send_message), 
-                    RemoteStorageAppPlugin(update.chat_id())
-                ],
-                # fmt: on
+                plugins,
             )
 
             self._report_usage(
