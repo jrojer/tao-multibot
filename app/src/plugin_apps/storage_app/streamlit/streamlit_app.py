@@ -1,15 +1,14 @@
 from typing import Optional
 import streamlit as st
 from app.src.observability.logger import Logger
+from app.src.plugin_apps.storage_app.streamlit.auth import check_password, logout
 from app.src.plugin_apps.storage_app.table_manager import TableManager
 
 logger = Logger(__name__)
 
 _TM = TableManager()
 
-# TODO: add authentication
 # TODO: add chat names for better UX
-
 
 
 def update(chat_id: str, table_name: str) -> None:
@@ -22,7 +21,6 @@ def update(chat_id: str, table_name: str) -> None:
 
     key = f"{table_name}_{chat_id}"
     changes = st.session_state[key]
-    logger.info(f"changes: {changes} to table: {table_name} for chat_id: {chat_id}")
     for row_number, columns in changes["edited_rows"].items():
         for column_name, value in columns.items():
             row_id = _get_row_id(row_number)
@@ -42,6 +40,12 @@ def update(chat_id: str, table_name: str) -> None:
     
 
 def start_streamlit():
+    st.set_page_config("/A", "⭕")
+    _hide_deploy_button()
+
+    if not check_password():
+        st.stop()
+        
     files = _TM.get_dataframes()
     if len(files) == 0:
         st.write("No tables found") # type: ignore
@@ -58,3 +62,17 @@ def start_streamlit():
                 on_change=update,
                 args=(file["chat_id"], file["table_name"]),
             )
+    
+    st.button("Logout", on_click=logout)
+
+
+def _hide_deploy_button():
+    st.markdown(
+        r"""
+            <style>
+            .stDeployButton {
+                    visibility: hidden;
+                }
+            </style>
+        """, unsafe_allow_html=True
+    )

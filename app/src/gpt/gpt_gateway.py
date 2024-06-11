@@ -11,7 +11,7 @@ logger = Logger(__name__)
 
 
 class GptGateway:
-    MAX_NUM_OF_FUNCTION_CALLS = 20
+    MAX_NUM_OF_FUNCTION_CALLS = 8
 
     def __init__(self, gpt_completer: GptCompleter):
         self._gpt_completer: GptCompleter = check_required(
@@ -43,17 +43,21 @@ class GptGateway:
         function_call: Optional[ChatformMessage.FunctionCall] = (
             response_message.function_call()
         )
+        num_of_function_calls = 1
 
-        num_of_function_calls = 0
         while function_call is not None:
             chatform.add_message(response_message)
             logger.info("Calling function: %s", function_call.name())
 
             plugin: Plugin = plugin_by_function_name[function_call.name()]
 
-            result: str = await plugin.call(function_call.name(), function_call.arguments())
+            result: str = await plugin.call(
+                function_call.name(), function_call.arguments()
+            )
 
-            result_message: ChatformMessage = function_result_message(function_call.name(), result)
+            result_message: ChatformMessage = function_result_message(
+                function_call.name(), result
+            )
 
             all_messages.append(result_message)
 
@@ -67,8 +71,16 @@ class GptGateway:
             all_messages.append(response_message)
 
             function_call = response_message.function_call()
-            num_of_function_calls += 1
-            if num_of_function_calls >= GptGateway.MAX_NUM_OF_FUNCTION_CALLS:
-                raise RuntimeError("Max number of function calls exceeded.")
+
+            if function_call is not None:
+                num_of_function_calls += 1
+
+                if num_of_function_calls >= GptGateway.MAX_NUM_OF_FUNCTION_CALLS:
+                    message = f"Max number of function calls ({GptGateway.MAX_NUM_OF_FUNCTION_CALLS}) reached. Stopping further calls."
+                    logger.warning(message)
+                    all_messages.append(
+                        function_result_message(function_call.name(), message)
+                    )
+                    return all_messages
 
         return all_messages

@@ -10,7 +10,7 @@ from app.src.observability.logger import Logger
 from app.src.plugin_apps.storage_app.storage_plugin_server.storage_plugin_server import (
     StoragePluginServer,
 )
-from app.src.plugin_apps.storage_app.streamlit_app import start_streamlit
+from app.src.plugin_apps.storage_app.streamlit.streamlit_app import start_streamlit
 
 
 logger = Logger(__name__)

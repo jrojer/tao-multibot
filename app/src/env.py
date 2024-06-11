@@ -36,6 +36,7 @@ def LOG_DIR() -> Path:
 def DATA_DIR() -> Path:
     return _create_if_not_exists(VAR_DIR() / "data")
 
+
 def SERVER_PORT() -> int:
     return int(_vars["SERVER_PORT"])
 
@@ -124,6 +125,17 @@ def POSTGRES_SCHEMAS() -> str:
     return _vars["POSTGRES"]["schemas"]
 
 
+# STREAMLIT
+
+
+def STREAMLIT_TOKEN() -> str:
+    return _vars["STREAMLIT"]["token"]
+
+
+def STREAMLIT_TTL_SECONDS() -> int:
+    return int(_vars["STREAMLIT"]["ttl_seconds"])
+
+
 # TEST MODE
 
 __test_mode = [False]
@@ -148,6 +160,7 @@ def init_env(master_conf_path: str, var_dir_path: str):
     set_var("INFLUXDB", infra["influxdb"])
     set_var("SERVER_PORT", infra["server"]["port"])
     set_var("DEBUG", infra["debug"])
+    set_var("STREAMLIT", infra["streamlit"])
 
 
 init_env("./master.json", "./var")

@@ -17,6 +17,7 @@ class TableManager:
         self._data_dir = check_required(data_dir, "data_dir", Path)
         self._chat_ids = self._get_chat_ids()
 
+    # TODO: consider returning constructed SqlExecutor object
     def execute_sql(self, sql: str, chat_id: str) -> list[dict[str, str]]:
         executor = SqlExecutor(self._get_db(chat_id))
         result = executor.execute(sql)

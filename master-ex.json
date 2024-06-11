@@ -18,6 +18,10 @@
             "org": "org",
             "bucket": "bucket",
             "token": "token"
+        },
+        "streamlit": {
+            "token": "xxx",
+            "ttl_seconds": 3600
         }
     },
     "bots": {
