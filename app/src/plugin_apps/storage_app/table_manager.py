@@ -15,6 +15,8 @@ logger = Logger(__name__)
 class TableManager:
     def __init__(self, data_dir: Path = env.DATA_DIR()):
         self._data_dir = check_required(data_dir, "data_dir", Path)
+        # TODO: this is a hot fix, consider proper implementation
+        SqlExecutor(self._data_dir / "metadata.db").execute(f"CREATE TABLE IF NOT EXISTS chat_ids (chat_id TEXT PRIMARY KEY);")
         self._chat_ids = self._get_chat_ids()
 
     # TODO: consider returning constructed SqlExecutor object
