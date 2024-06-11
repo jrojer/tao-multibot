@@ -125,15 +125,23 @@ def POSTGRES_SCHEMAS() -> str:
     return _vars["POSTGRES"]["schemas"]
 
 
-# STREAMLIT
+# TABLE_PLUGIN
 
 
 def STREAMLIT_TOKEN() -> str:
-    return _vars["STREAMLIT"]["token"]
+    return _vars["TABLE_PLUGIN"]["web_auth_token"]
 
 
 def STREAMLIT_TTL_SECONDS() -> int:
-    return int(_vars["STREAMLIT"]["ttl_seconds"])
+    return int(_vars["TABLE_PLUGIN"]["web_auth_token_ttl_seconds"])
+
+
+def TABLE_PLUGIN_SERVER_PORT() -> int:
+    return int(_vars["TABLE_PLUGIN"]["plugin_server_port"])
+
+
+def TABLE_PLUGIN_STREAMLIT_PORT() -> int:
+    return int(_vars["TABLE_PLUGIN"]["streamlit_port"])
 
 
 # TEST MODE
@@ -160,7 +168,7 @@ def init_env(master_conf_path: str, var_dir_path: str):
     set_var("INFLUXDB", infra["influxdb"])
     set_var("SERVER_PORT", infra["server"]["port"])
     set_var("DEBUG", infra["debug"])
-    set_var("STREAMLIT", infra["streamlit"])
+    set_var("TABLE_PLUGIN", infra["table_plugin"])
 
 
 init_env("./master.json", "./var")

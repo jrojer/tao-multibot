@@ -1,4 +1,5 @@
 import sys
+
 # NOTE: this helps streamlit process to locate the required modules
 sys.path.append(__file__.split("app/src")[0])
 
@@ -11,19 +12,17 @@ from app.src.plugin_apps.storage_app.storage_plugin_server.storage_plugin_server
     StoragePluginServer,
 )
 from app.src.plugin_apps.storage_app.streamlit.streamlit_app import start_streamlit
-
+from app.src import env
 
 logger = Logger(__name__)
-
-
-_PLUGIN_SEVER_PORT = 8999
-_STREAMLIT_PORT = 8501
 
 
 class StorageApp:
     def __init__(self):
         self._streamlit_process: subprocess.Popen[bytes]
-        self._storage_plugin_server = StoragePluginServer(_PLUGIN_SEVER_PORT)
+        self._storage_plugin_server = StoragePluginServer(
+            env.TABLE_PLUGIN_SERVER_PORT()
+        )
 
     def start(self):
         self._streamlit_process = subprocess.Popen(
@@ -33,7 +32,7 @@ class StorageApp:
                 __file__,
                 "--server.headless",
                 "true",
-                f"--server.port={_STREAMLIT_PORT}",
+                f"--server.port={env.TABLE_PLUGIN_STREAMLIT_PORT()}",
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

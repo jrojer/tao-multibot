@@ -19,9 +19,11 @@
             "bucket": "bucket",
             "token": "token"
         },
-        "streamlit": {
-            "token": "xxx",
-            "ttl_seconds": 3600
+        "table_plugin": {
+            "web_auth_token": "xxx",
+            "web_auth_token_ttl_seconds": 3600,
+            "plugin_server_port": 8999,
+            "streamlit_port": 8501
         }
     },
     "bots": {
