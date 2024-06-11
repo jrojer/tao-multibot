@@ -141,7 +141,11 @@ def TABLE_PLUGIN_SERVER_PORT() -> int:
 
 
 def TABLE_PLUGIN_STREAMLIT_PORT() -> int:
-    return int(_vars["TABLE_PLUGIN"]["streamlit_port"])
+    return int(_vars["TABLE_PLUGIN"]["web_port"])
+
+
+def TABLE_PLUGIN_WEB_PREFIX() -> str:
+    return _vars["TABLE_PLUGIN"]["web_prefix"]
 
 
 # TEST MODE

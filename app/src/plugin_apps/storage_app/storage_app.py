@@ -33,6 +33,7 @@ class StorageApp:
                 "--server.headless",
                 "true",
                 f"--server.port={env.TABLE_PLUGIN_STREAMLIT_PORT()}",
+                f"--server.baseUrlPath={env.TABLE_PLUGIN_WEB_PREFIX()}",
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
