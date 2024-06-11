@@ -147,6 +147,8 @@ def TABLE_PLUGIN_STREAMLIT_PORT() -> int:
 def TABLE_PLUGIN_WEB_PREFIX() -> str:
     return _vars["TABLE_PLUGIN"]["web_prefix"]
 
+def STREAMLIT_EXECUTABLE() -> str:
+    return _vars["TABLE_PLUGIN"]["streamlit_executable"]
 
 # TEST MODE
 

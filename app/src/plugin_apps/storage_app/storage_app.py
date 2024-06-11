@@ -27,7 +27,7 @@ class StorageApp:
     def start(self):
         self._streamlit_process = subprocess.Popen(
             [
-                "streamlit",
+                env.STREAMLIT_EXECUTABLE(),
                 "run",
                 __file__,
                 "--server.headless",
