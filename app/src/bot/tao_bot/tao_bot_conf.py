@@ -32,3 +32,7 @@ class TaoBotConf(ABC):
     @abstractmethod
     def bot_mention_names(self) -> list[str]:
         pass
+
+    @abstractmethod
+    def plugins(self) -> list[str]:
+        pass

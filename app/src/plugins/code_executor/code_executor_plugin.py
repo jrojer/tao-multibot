@@ -27,6 +27,10 @@ class CodeExecutorPlugin(Plugin):
         )
         self._on_success: Optional[ASYNC_CALLBACK] = on_success
 
+    @staticmethod
+    def name() -> str:
+        return "code_executor"
+
     def functions(self) -> list[dict[str, Any]]:
         return [
             {
@@ -49,6 +53,9 @@ class CodeExecutorPlugin(Plugin):
 
     def is_delegate(self) -> bool:
         return False
+    
+    async def system_prompt_attachment(self) -> Optional[str]:
+        return None
 
     async def call(self, name: str, args: str) -> str:
         logger.info("Calling function %s with args %s", name, args)

@@ -3,7 +3,9 @@ from app.src.bot.repo.chat_messages_repository.chat_message import ChatMessage
 from app.src.bot.repo.chat_messages_repository.chat_messages_repository import (
     ChatMessagesRepository,
 )
-from app.src.bot.repo.chat_messages_repository.content_type import ContentType as RepoContentType
+from app.src.bot.repo.chat_messages_repository.content_type import (
+    ContentType as RepoContentType,
+)
 from app.src.bot.tao_bot.content_type import ContentType as TaoContentType
 from app.src.bot.repo.chat_messages_repository.role import Role
 from app.src.bot.repo.chat_messages_repository.source import Source
@@ -19,12 +21,16 @@ from app.src.gpt.chatform_message import (
     user_message,
 )
 from app.src.gpt.gpt_gateway import GptGateway
+from app.src.gpt.plugin import Plugin
 from app.src.internal.common.content_downloader import ContentDownloader
 from app.src.internal.common.message_sender import MessageSender
 from app.src.internal.image.image import Image
 from app.src.observability.logger import Logger
 from app.src.observability.metrics_client.influxdb_metrics_client import MetricsReporter
 from app.src.plugins.code_executor.code_executor_plugin import CodeExecutorPlugin
+from app.src.plugins.database_manager.remote_storage_app_plugin import (
+    RemoteStorageAppPlugin,
+)
 
 
 logger = Logger(__name__)
@@ -115,7 +121,22 @@ class TaoBot:
         return authorised
 
     async def _build_chatform(self, chat_id: str) -> Chatform:
+        # TODO: process attachments only for enabled plugins
         system_prompt = self._conf.system_prompt()
+        for plugin_name in self._conf.plugins():
+            if plugin_name == RemoteStorageAppPlugin.name():
+                attachment: Optional[str] = await RemoteStorageAppPlugin(
+                    chat_id
+                ).system_prompt_attachment()
+                if attachment is not None:
+                    system_prompt = """\
+{sys_prompt}
+
+{attachment}
+""".format(
+                        sys_prompt=system_prompt, attachment=attachment
+                    )
+
         chatform = Chatform(system_prompt)
         messages = self._messages_repo.fetch_last_messages_by_chat_and_adder(
             chat_id, self.bot_username(), self._conf.number_of_messages_per_completion()
@@ -191,11 +212,20 @@ class TaoBot:
             _log_update(update, "Processing")
 
             async def send_message(message: str):
-                await self._message_sender.send_text(update.chat_id(), message, username="function")
+                await self._message_sender.send_text(
+                    update.chat_id(), message, username="function"
+                )
+
+            plugins: list[Plugin] = []
+            for plugin_name in self._conf.plugins():
+                if plugin_name == RemoteStorageAppPlugin.name():
+                    plugins.append(RemoteStorageAppPlugin(update.chat_id()))
+                if plugin_name == CodeExecutorPlugin.name():
+                    plugins.append(CodeExecutorPlugin(on_success=send_message))
 
             reply_messages: list[ChatformMessage] = await self._gateway.forward(
                 chatform,
-                [CodeExecutorPlugin(on_success=send_message)],
+                plugins,
             )
 
             self._report_usage(

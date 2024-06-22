@@ -8,15 +8,19 @@ def is_empty_string(value: Any) -> bool:
     return isinstance(value, str) and len(value.strip()) == 0
 
 
-def check_optional(value: Any, name: str, t: type) -> Any:
-    if value is not None and not isinstance(value, t):
+def check_optional(value: Any, name: str, t:Union[type, tuple[type, ...]]) -> Any:
+    if value is None:
+        return None
+    if not isinstance(t, tuple):
+        t = (t,)
+    if not any([isinstance(value, tt) for tt in t]):
         raise TypeError(
-            f"{name} should be {t.__name__}, but it is {value.__class__.__name__}"
+            f"{name} should be one of {t}, but it is {value.__class__.__name__}"
         )
     return value
 
 
-def check_required(value: Any, name: str, t:type=object) -> Any:
+def check_required(value: Any, name: str, t:Union[type, tuple[type, ...]]=object) -> Any:
     if value is None or is_empty_string(value):
         raise ValueError(f"{name} is required")
     if t is not object:

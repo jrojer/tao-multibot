@@ -33,6 +33,10 @@ def LOG_DIR() -> Path:
     return _create_if_not_exists(VAR_DIR() / "logs")
 
 
+def DATA_DIR() -> Path:
+    return _create_if_not_exists(VAR_DIR() / "data")
+
+
 def SERVER_PORT() -> int:
     return int(_vars["SERVER_PORT"])
 
@@ -121,6 +125,31 @@ def POSTGRES_SCHEMAS() -> str:
     return _vars["POSTGRES"]["schemas"]
 
 
+# TABLE_PLUGIN
+
+
+def STREAMLIT_TOKEN() -> str:
+    return _vars["TABLE_PLUGIN"]["web_auth_token"]
+
+
+def STREAMLIT_TTL_SECONDS() -> int:
+    return int(_vars["TABLE_PLUGIN"]["web_auth_token_ttl_seconds"])
+
+
+def TABLE_PLUGIN_SERVER_PORT() -> int:
+    return int(_vars["TABLE_PLUGIN"]["plugin_server_port"])
+
+
+def TABLE_PLUGIN_STREAMLIT_PORT() -> int:
+    return int(_vars["TABLE_PLUGIN"]["web_port"])
+
+
+def TABLE_PLUGIN_WEB_PREFIX() -> str:
+    return _vars["TABLE_PLUGIN"]["web_prefix"]
+
+def STREAMLIT_EXECUTABLE() -> str:
+    return _vars["TABLE_PLUGIN"]["streamlit_executable"]
+
 # TEST MODE
 
 __test_mode = [False]
@@ -145,6 +174,7 @@ def init_env(master_conf_path: str, var_dir_path: str):
     set_var("INFLUXDB", infra["influxdb"])
     set_var("SERVER_PORT", infra["server"]["port"])
     set_var("DEBUG", infra["debug"])
+    set_var("TABLE_PLUGIN", infra["table_plugin"])
 
 
 init_env("./master.json", "./var")

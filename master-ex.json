@@ -18,6 +18,14 @@
             "org": "org",
             "bucket": "bucket",
             "token": "token"
+        },
+        "table_plugin": {
+            "web_auth_token": "xxx",
+            "web_auth_token_ttl_seconds": 3600,
+            "plugin_server_port": 8999,
+            "web_port": 8501,
+            "web_prefix": "/a",
+            "streamlit_executable": "streamlit"
         }
     },
     "bots": {

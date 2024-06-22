@@ -76,6 +76,7 @@ class MasterConfig:
                 "system_prompt": env.SYSTEM_PROMPT_FOR(bot_id),
                 "messages_per_completion": tc["messages_per_completion"],
                 "bot_mention_names": tc["bot_mention_names"],
+                "plugins": tc["plugins"],
             },
             "gpt": {
                 "url": gc["url"],
@@ -86,7 +87,7 @@ class MasterConfig:
                 "top_p": gc["top_p"],
                 "frequency_penalty": gc["frequency_penalty"],
                 "presence_penalty": gc["presence_penalty"],
-            },
+            }
         }
 
     def bots(self) -> list[dict[str, Any]]:
