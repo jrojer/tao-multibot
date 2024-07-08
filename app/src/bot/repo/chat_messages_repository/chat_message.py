@@ -24,6 +24,8 @@ class ChatMessage:
             self._added_by = None
             self._reply_to = None
             self._ref = None
+            self._function_name = None
+            self._function_args = None
 
         def id(self, id: str) -> "ChatMessage.Builder":
             self._id = id
@@ -68,6 +70,14 @@ class ChatMessage:
         def ref(self, ref: Optional[str]) -> "ChatMessage.Builder":
             self._ref = ref
             return self
+
+        def function_name(self, function_name: Optional[str]) -> "ChatMessage.Builder":
+            self._function_name = function_name
+            return self
+        
+        def function_args(self, function_args: Optional[str]) -> "ChatMessage.Builder":
+            self._function_args = function_args
+            return self
         
         def build(self):
             return ChatMessage(self)
@@ -90,6 +100,8 @@ class ChatMessage:
         self._added_by = check_required(builder._added_by, "added_by", str)  # type: ignore
         self._reply_to = check_optional(builder._reply_to, "reply_to", str)  # type: ignore
         self._ref = check_optional(builder._ref, "ref", str)  # type: ignore
+        self._function_name = check_optional(builder._function_name, "function_name", str)  # type: ignore
+        self._function_args = check_optional(builder._function_args, "function_args", str)  # type: ignore
 
     def id(self) -> str:
         return self._id
@@ -124,6 +136,12 @@ class ChatMessage:
     def ref(self) -> Optional[str]:
         return self._ref
     
+    def function_name(self) -> Optional[str]:
+        return self._function_name
+    
+    def function_args(self) -> Optional[str]:
+        return self._function_args
+    
     def __repr__(self) -> str:
         return f"{timestamp_to_readable_datetime(self._timestamp)} {self._user}: {self._content}"
 
@@ -140,6 +158,8 @@ class ChatMessage:
             "added_by": self._added_by,
             "reply_to": self._reply_to,
             "ref": self._ref,
+            "function_name": self._function_name,
+            "function_args": self._function_args,
         }
 
     # NOTE: no id in the comparison
@@ -157,4 +177,6 @@ class ChatMessage:
             and self._added_by == other.added_by()
             and self._reply_to == other.reply_to()
             and self._ref == other.ref()
+            and self._function_name == other.function_name()
+            and self._function_args == other.function_args()
         )

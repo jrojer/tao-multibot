@@ -17,6 +17,8 @@ from app.src.gpt.chatform import Chatform
 from app.src.gpt.chatform_message import (
     ChatformMessage,
     assistant_message,
+    function_call_message,
+    function_result_message,
     image_message,
     user_message,
 )
@@ -78,6 +80,13 @@ def _a_chat_messasge_from(update: TaoBotUpdate, bot_username: str) -> ChatMessag
     return message
 
 
+ATTACHMENT_TEMPLATE = """\
+{sys_prompt}
+
+{attachment}
+"""
+
+
 class TaoBot:
     def __init__(
         self,
@@ -120,34 +129,44 @@ class TaoBot:
             )
         return authorised
 
-    async def _build_chatform(self, chat_id: str) -> Chatform:
-        # TODO: process attachments only for enabled plugins
-        system_prompt = self._conf.system_prompt()
+    async def with_attachments(self, chat_id: str, system_prompt: str) -> str:
         for plugin_name in self._conf.plugins():
             if plugin_name == RemoteStorageAppPlugin.name():
-                attachment: Optional[str] = await RemoteStorageAppPlugin(
+                attachment = await RemoteStorageAppPlugin(
                     chat_id
                 ).system_prompt_attachment()
                 if attachment is not None:
-                    system_prompt = """\
-{sys_prompt}
-
-{attachment}
-""".format(
+                    system_prompt = ATTACHMENT_TEMPLATE.format(
                         sys_prompt=system_prompt, attachment=attachment
                     )
+        return system_prompt
 
+    async def _build_chatform(self, chat_id: str) -> Chatform:
+        system_prompt = await self.with_attachments(chat_id, self._conf.system_prompt())
         chatform = Chatform(system_prompt)
+        # TODO: this should be modified to enable other bots messages visibility.
+        #       Beware to exclude other bots function calls
         messages = self._messages_repo.fetch_last_messages_by_chat_and_adder(
             chat_id, self.bot_username(), self._conf.number_of_messages_per_completion()
         )
         for m in messages:
+            # TODO: this should be rewriten with use of dedicated converter method or class. Repo message -> Chatform message
             content = m.content()
 
             if m.reply_to() is not None and content is not None:
                 content = f"{content} (Ref.: {m.reply_to()})"
 
-            if m.user() == self.bot_username():
+            if m.content_type() == RepoContentType.FUNCTION:
+                if m.user() != self.bot_username():
+                    continue
+                f_name = m.function_name()
+                if f_name is not None:
+                    f_args = check_required(m.function_args(), "function_args", str)
+                    chatform.add_message(function_call_message(f_name, f_args))
+                else:
+                    content = check_required(content, "content", str)
+                    chatform.add_message(function_result_message(m.user(), content))
+            elif m.user() == self.bot_username():
                 chatform.add_message(
                     assistant_message(check_required(content, "content", str))
                 )
@@ -233,25 +252,60 @@ class TaoBot:
                 update,
             )
 
-            reply_message = reply_messages[-1]
-
-            bot_message = (
-                ChatMessage.new()
-                .content(check_required(reply_message.content(), "content", str))
-                .content_type(RepoContentType.TEXT)
-                .user(self.bot_username())
-                .chat(update.chat_id())
-                .source(Source.TELEGRAM)
-                .role(Role.ASSISTANT)
-                .added_by(self.bot_username())
-                .build()
-            )
-
             # fmt: off
-            logger.info("Replying %s@%s-%s: %s", self.bot_username(), update.chat_name(), update.chat_id(), reply_message.content())
+            logger.info("Replying %s@%s-%s: %s", self.bot_username(), update.chat_name(), update.chat_id(), reply_messages[-1].content())
             # fmt: on
 
-            self._messages_repo.add(bot_message)
-            return reply_message
+            for reply_message in reply_messages:
+                self._messages_repo.add(
+                    _chat_message(reply_message, update.chat_id(), self.bot_username())
+                )
+
+            return reply_messages[-1]
 
         return reply(reply_action, postreply_action)
+
+
+def _chat_message(
+    chatform_message: ChatformMessage, chat_id: str, bot_username: str
+) -> ChatMessage:
+
+    role = Role.ASSISTANT
+    f_name: Optional[str] = None
+    f_args: Optional[str] = None
+    content: Optional[str] = None
+    content_type: RepoContentType = RepoContentType.TEXT
+    if chatform_message.is_function_call_result():
+        user = check_required(chatform_message.name(), "name", str)
+        content = check_required(chatform_message.content(), "content", str)
+        role = Role.FUNCTION
+        content_type = RepoContentType.FUNCTION
+    elif chatform_message.is_function_call():
+        user = bot_username
+        fc: ChatformMessage.FunctionCall = check_required(
+            chatform_message.function_call(),
+            "function_call",
+            ChatformMessage.FunctionCall,
+        )
+        # TODO: consider putting GPT-instructing text into a separate module. It may affect the behavior as does prompting.
+        content = None
+        f_name = fc.name()
+        f_args = fc.arguments()
+        content_type = RepoContentType.FUNCTION
+    else:
+        user = bot_username
+        content = check_required(chatform_message.content(), "content", str)
+
+    return (
+        ChatMessage.new()
+        .content(content)
+        .content_type(content_type)
+        .user(user)
+        .chat(chat_id)
+        .source(Source.TELEGRAM)
+        .role(role)
+        .added_by(bot_username)
+        .function_name(f_name)
+        .function_args(f_args)
+        .build()
+    )

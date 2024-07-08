@@ -113,7 +113,6 @@ def _filter_tags(post: str) -> str:
 async def safe_reply_markdown(update: Update, post: str) -> None:
     message: Message = check_required(update.message, "update.message", Message)
     try:
-        logger.info("Replying to %s with markdown: %s", message.chat_id, post)
         await message.reply_html(
             _filter_tags(
                 markdown.markdown(post, extensions=["fenced_code"])

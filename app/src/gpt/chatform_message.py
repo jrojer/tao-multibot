@@ -163,10 +163,7 @@ class ChatformMessage:
             [SYSTEM, USER, ASSISTANT, FUNCTION],
         )
         self._content = check_optional(builder._content, CONTENT, str)  # type: ignore
-        if self._content is not None:
-            self._content_type = check_required(builder._content_type, "content_type", ContentType)  # type: ignore
-        else:
-            self._content_type = None
+        self._content_type = check_required(builder._content_type, "content_type", ContentType)  # type: ignore
         self._name = _safe_format_username(check_optional(builder._name, NAME, str))  # type: ignore
         self._function_call = check_optional(
             builder._function_call, FUNCTION_CALL, ChatformMessage.FunctionCall  # type: ignore
@@ -180,7 +177,7 @@ class ChatformMessage:
         return self._role
 
     def content(self) -> Optional[str]:
-        return self._content
+            return self._content
 
     def content_type(self) -> Optional[ContentType]:
         return self._content_type
@@ -203,7 +200,7 @@ class ChatformMessage:
                     "url": self._content
                 }
             }]
-        elif self._content_type == ContentType.TEXT:
+        elif self._content_type == ContentType.TEXT and self._content is not None:
             content = [{
                 "type": "text",
                 "text": self._content
@@ -263,6 +260,9 @@ class ChatformMessage:
             and self._content is not None
         )
 
+    def is_function_call(self) -> bool:
+        return self._role == ASSISTANT and self._function_call is not None
+
 
 def function_call() -> ChatformMessage.FunctionCall.Builder:
     return ChatformMessage.FunctionCall.Builder()
@@ -306,7 +306,8 @@ def system_message(content: str) -> ChatformMessage:
 def function_call_message(name: str, arguments: str) -> ChatformMessage:
     return (
         chatform_message()
-        .role(FUNCTION)
+        .role(ASSISTANT)
+        .content_type(ContentType.FUNCTION_CALL)
         .function_call(function_call().name(name).arguments(arguments).build())
         .build()
     )
