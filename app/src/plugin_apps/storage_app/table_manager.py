@@ -10,6 +10,8 @@ from app.src.observability.logger import Logger
 
 logger = Logger(__name__)
 
+_GET_TABLES_QUERY = "SELECT name FROM sqlite_master WHERE type='table' and name!='sqlite_sequence';"
+
 
 # NOTE: this class is responsible for the DATA_DIR
 class TableManager:
@@ -32,7 +34,7 @@ class TableManager:
     def get_tables(self, chat_id: str) -> dict[str, list[dict[str, Any]]]:
         executor = SqlExecutor(self._get_db(chat_id))
         d: dict[str, list[dict[str, Any]]] = {}
-        tabels = executor.execute("SELECT name FROM sqlite_master WHERE type='table';").rowwise()
+        tabels = executor.execute(_GET_TABLES_QUERY).rowwise()
         for table in tabels:
             res = executor.execute(f"PRAGMA table_info({table["name"]})").rowwise()
             d[table["name"]] = res 
@@ -43,7 +45,7 @@ class TableManager:
         chat_ids = self._get_chat_ids()
         for chat_id in chat_ids:
             executor = SqlExecutor(self._get_db(chat_id))
-            tables = executor.execute("SELECT name FROM sqlite_master WHERE type='table';").rowwise()
+            tables = executor.execute(_GET_TABLES_QUERY).rowwise()
             for table in tables:
                 table_name = table["name"]
                 df = pd.DataFrame(executor.execute(f"SELECT * FROM {table_name};").columnwise())
