@@ -156,11 +156,11 @@ class TaoBot:
             if m.reply_to() is not None and content is not None:
                 content = f"{content} (Ref.: {m.reply_to()})"
 
-            if m.content_type() == RepoContentType.FUNCTION:
+            if m.content_type() in [RepoContentType.FUNCTION_CALL, RepoContentType.FUNCTION_RESULT]:
                 if m.user() != self.bot_username():
                     continue
-                f_name = m.function_name()
-                if f_name is not None:
+                if m.content_type() == RepoContentType.FUNCTION_CALL:
+                    f_name = check_required(m.function_name(), "function_name", str)
                     f_args = check_required(m.function_args(), "function_args", str)
                     chatform.add_message(function_call_message(f_name, f_args))
                 else:
@@ -279,7 +279,7 @@ def _chat_message(
         user = check_required(chatform_message.name(), "name", str)
         content = check_required(chatform_message.content(), "content", str)
         role = Role.FUNCTION
-        content_type = RepoContentType.FUNCTION
+        content_type = RepoContentType.FUNCTION_RESULT
     elif chatform_message.is_function_call():
         user = bot_username
         fc: ChatformMessage.FunctionCall = check_required(
@@ -291,7 +291,7 @@ def _chat_message(
         content = None
         f_name = fc.name()
         f_args = fc.arguments()
-        content_type = RepoContentType.FUNCTION
+        content_type = RepoContentType.FUNCTION_CALL
     else:
         user = bot_username
         content = check_required(chatform_message.content(), "content", str)

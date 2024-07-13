@@ -2,7 +2,7 @@ import enum
 
 
 class ContentType(enum.Enum):
-    FUNCTION_CALL = "function"
+    FUNCTION_CALL = "function_call"
     TEXT = "text"
     IMAGE = "image"
 

@@ -23,7 +23,7 @@ _d = {
 }
 
 
-def timestamp_now(precision: Precision = Precision.SECOND) -> int:
+def timestamp_now(precision: Precision = Precision.NANOSECOND) -> int:
     if _mode[0]:
         return 123456789
     coef = _d[precision.value]
