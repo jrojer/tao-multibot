@@ -6,19 +6,7 @@ from app.src import env
 from app.src.plugin_apps.storage_app.storage_plugin_server.sql_executor.sql_executor import (
     SqlExecutor,
 )
-
-
-class MockRequest:
-    class MockMatchInfo:
-        def __init__(self, chat_id: str):
-            self.chat_id = chat_id
-
-        def get(self, key) -> str: # type: ignore
-            return self.chat_id
-
-    def __init__(self, chat_id: str):
-        self.match_info = MockRequest.MockMatchInfo(chat_id)
-
+from app.test.fixtures.mock_aiohttp_request import MockAioHttpRequest
 
 @pytest.fixture
 def chat_id():
@@ -45,7 +33,7 @@ async def test_get_sys_prompt_attachment_resource(chat_id: str):
 
     handler = resource.handler()
 
-    req = MockRequest(chat_id)
+    req = MockAioHttpRequest(chat_id, {})
 
     res = await handler(req)  # type: ignore
 

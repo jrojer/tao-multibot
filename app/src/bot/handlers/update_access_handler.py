@@ -15,6 +15,6 @@ def get_update_access_handler(client: ConfClient):
         for username in re.findall(r"\-(\w+)", content):
             client.disable_for_username(username)
             disabled_for.append(username)
-        return f"Enabled for [{enabled_for}], disabled for [{disabled_for}]"
+        return f"Enabled for {enabled_for}, disabled for {disabled_for}"
 
     return handler

@@ -74,7 +74,8 @@ class TaoBotCommands:
         for cmd in self._commands().keys():
             if update.content_type() == ContentType.TEXT:
                 content: str = check_required(update.content(), "content", str)
-                return content.startswith(_command(bot_username, cmd))
+                if content.startswith(_command(bot_username, cmd)):
+                    return True
         return False
 
     def _run_command_for(self, bot_username: str, update: TaoBotUpdate) -> str:

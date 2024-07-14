@@ -2,6 +2,7 @@ from typing import Optional
 import streamlit as st
 from app.src.observability.logger import Logger
 from app.src.plugin_apps.storage_app.streamlit.auth import check_password, logout
+from app.src.plugin_apps.storage_app.streamlit.utils import hide_menu
 from app.src.plugin_apps.storage_app.table_manager import TableManager
 
 logger = Logger(__name__)
@@ -41,7 +42,7 @@ def update(chat_id: str, table_name: str) -> None:
 
 def start_streamlit():
     st.set_page_config("/A", "⭕")
-    _hide_deploy_button()
+    hide_menu()
 
     if not check_password():
         st.stop()
@@ -64,15 +65,3 @@ def start_streamlit():
             )
     
     st.button("Logout", on_click=logout)
-
-
-def _hide_deploy_button():
-    st.markdown(
-        r"""
-            <style>
-            .stDeployButton {
-                    visibility: hidden;
-                }
-            </style>
-        """, unsafe_allow_html=True
-    )
