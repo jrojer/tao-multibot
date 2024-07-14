@@ -153,8 +153,9 @@ class TaoBot:
             # TODO: this should be rewriten with use of dedicated converter method or class. Repo message -> Chatform message
             content = m.content()
 
-            if m.reply_to() is not None and content is not None:
-                content = f"{content} (Ref.: {m.reply_to()})"
+            reply_to = m.reply_to()
+            if reply_to is not None and content is not None:
+                content = f"(Referring to previous message: \"{reply_to.replace("\n","\\n")}\")\n\n{content}"
 
             if m.content_type() in [RepoContentType.FUNCTION_CALL, RepoContentType.FUNCTION_RESULT]:
                 if m.user() != self.bot_username():

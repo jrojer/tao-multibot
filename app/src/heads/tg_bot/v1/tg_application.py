@@ -88,7 +88,7 @@ def contains_bot_name(text: Optional[str], name_list: list[str]) -> bool:
 
 
 def _post_mentioned(message: Message) -> Optional[str]:
-    PREVIEW_LENGTH = 65
+    PREVIEW_LENGTH = 85
     reply = message.reply_to_message
     if reply is not None and reply.text is not None:
         # TODO: bug: this returns shorter text than expected
@@ -98,9 +98,8 @@ def _post_mentioned(message: Message) -> Optional[str]:
 async def safe_reply_markdown(update: Update, post: str) -> None:
     message: Message = check_required(update.message, "update.message", Message)
     try:
-        await message.reply_markdown_v2(telegramify_markdown.markdownify(post)) # type: ignore
+        await message.reply_markdown_v2(telegramify_markdown.markdownify(post))  # type: ignore
     except BadRequest as e:
-        # TODO: find out why bot generated post is not accepted. This leads to ugly messages sometimes.
         logger.warning(
             "Failed to reply markdown, trying plain text.\n'''%s\n%s'''", post, e
         )
