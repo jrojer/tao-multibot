@@ -8,3 +8,4 @@ markdown
 streamlit
 streamlit-cookies-controller
 pandas
+telegramify_markdown
