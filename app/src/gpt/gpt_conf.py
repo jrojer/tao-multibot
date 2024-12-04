@@ -34,3 +34,7 @@ class GptConf(ABC):
     @abstractmethod
     def url(self) -> str:
         pass
+
+    @abstractmethod
+    def type(self) -> str:
+        pass

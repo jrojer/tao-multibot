@@ -37,7 +37,10 @@ class Chatform:
     def clear(self):
         self._messages = []
 
-    def messages(self) -> list[dict[str, Any]]:
+    def messages(self) -> List[ChatformMessage]:
+        return self._messages
+
+    def messages_as_dict(self) -> list[dict[str, Any]]:
         result = [self._system_prompt.to_dict()]
         for message in self._messages:
             result.append(message.to_dict())

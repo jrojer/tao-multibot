@@ -10,8 +10,7 @@ from app.src.observability.logger import Logger
 logger = Logger(__name__)
 
 
-# TODO: consider adding tenacity to retry requests in case of failure.
-class OpenaiGptCompleter(GptCompleter):
+class Llama3GptCompleter(GptCompleter):
     def __init__(self, config: GptConf):
         self._config = config
 
@@ -29,13 +28,8 @@ class OpenaiGptCompleter(GptCompleter):
             "top_p": cfg.top_p(),
             "presence_penalty": cfg.presence_penalty(),
             "frequency_penalty": cfg.frequency_penalty(),
-            "messages": chatform.messages_as_dict(),
+            "messages": _reformated(chatform.messages()),
         }
-        if len(functions) > 0:
-            kwargs["functions"] = functions
-            kwargs["function_call"] = "auto"
-        if force_json:
-            kwargs["response_format"] = {"type": "json_object"}
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -49,3 +43,14 @@ class OpenaiGptCompleter(GptCompleter):
                 response.raise_for_status()
                 data = await response.json()
                 return ChatformMessage.from_result_object(data)
+
+
+def _reformated(messages: list[ChatformMessage]) -> list[dict[str, Any]]:
+    return [
+        {
+            "role": m.role(),
+            "content": m.content(),
+            "name": m.name(),
+        }
+        for m in messages
+    ]

@@ -191,6 +191,7 @@ class ChatformMessage:
     def usage(self) -> Optional[Usage]:
         return self._usage
 
+    # TODO: this is openai specific. Consider moving it to the openai_gpt_completer module
     def to_dict(self) -> dict[str, Any]:
         # fmt: off
         if self._content_type == ContentType.IMAGE:

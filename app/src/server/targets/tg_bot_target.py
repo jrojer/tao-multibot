@@ -18,6 +18,7 @@ from app.src import env
 from app.src.gpt.gpt_completer import GptCompleter
 from app.src.gpt.gpt_conf import GptConf
 from app.src.gpt.gpt_gateway import GptGateway
+from app.src.gpt.llama3_gpt_completer import Llama3GptCompleter
 from app.src.gpt.openai_gpt_completer import OpenaiGptCompleter
 from app.src.heads.tg_bot.v1.tg_application import TgApplication
 from app.src.heads.tg_bot.v1.tg_bot_message_sender import TgBotMessageSender
@@ -57,7 +58,13 @@ class TgBotTarget:
             )
         else:
             repo: ChatMessagesRepository = InMemoryChatMessagesRepository()
-        gpt_completer: GptCompleter = OpenaiGptCompleter(gpt_conf)
+
+        # TODO: consider using enum
+        if gpt_conf.type() == "llama3":
+            gpt_completer: GptCompleter = Llama3GptCompleter(gpt_conf)
+        else:
+            gpt_completer: GptCompleter = OpenaiGptCompleter(gpt_conf)
+        
         gpt_gateway: GptGateway = GptGateway(gpt_completer)
         message_sender: MessageSender = TgBotMessageSender(self._telegram_token, repo)
         tao_bot: TaoBot = TaoBot(

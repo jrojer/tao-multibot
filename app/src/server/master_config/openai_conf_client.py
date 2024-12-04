@@ -19,6 +19,9 @@ class GptConfClient(GptConf):
     
     def url(self) -> str:
         return self._conf()["url"]
+    
+    def type(self) -> str:
+        return self._conf()["type"]
 
     def model(self) -> str:
         return self._conf()["model"]
