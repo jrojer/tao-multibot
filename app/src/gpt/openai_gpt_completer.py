@@ -35,6 +35,11 @@ class OpenaiGptCompleter(GptCompleter):
             del kwargs["temperature"]
             del kwargs["max_tokens"]
             kwargs["max_completion_tokens"] = cfg.max_tokens()
+            del kwargs["messages"]
+            messages_without_images = [
+                m for m in chatform.messages() if m["content"][0]["type"] != "image_url"
+            ]
+            kwargs["messages"] = messages_without_images
         if len(functions) > 0:
             kwargs["functions"] = functions
             kwargs["function_call"] = "auto"
