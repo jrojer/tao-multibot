@@ -31,6 +31,10 @@ class OpenaiGptCompleter(GptCompleter):
             "frequency_penalty": cfg.frequency_penalty(),
             "messages": chatform.messages(),
         }
+        if cfg.model() == "o3-mini":
+            del kwargs["temperature"]
+            del kwargs["max_tokens"]
+            kwargs["max_completion_tokens"] = cfg.max_tokens()
         if len(functions) > 0:
             kwargs["functions"] = functions
             kwargs["function_call"] = "auto"
@@ -46,6 +50,8 @@ class OpenaiGptCompleter(GptCompleter):
                     "Authorization": f"Bearer {cfg.token()}",
                 },
             ) as response:
+                if response.status >= 400:
+                    logger.error("Failed to complete:\n%s", response.text)
                 response.raise_for_status()
                 data = await response.json()
                 return ChatformMessage.from_result_object(data)
