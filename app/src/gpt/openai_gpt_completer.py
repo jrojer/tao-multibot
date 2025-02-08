@@ -51,7 +51,7 @@ class OpenaiGptCompleter(GptCompleter):
                 },
             ) as response:
                 if response.status >= 400:
-                    logger.error("Failed to complete:\n%s", response.text)
+                    logger.error("Failed to complete:\n%s", response.text())
                 response.raise_for_status()
                 data = await response.json()
                 return ChatformMessage.from_result_object(data)
